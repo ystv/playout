@@ -1,4 +1,4 @@
-package scheduler
+package programming
 
 import (
 	"context"
@@ -9,17 +9,17 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-// ProgrammeRepo encapsulates our dependency
-type ProgrammeRepo struct {
+// Store encapsulates our dependency
+type Store struct {
 	db *sqlx.DB
 }
 
-var _ ProgrammeStore = &ProgrammeRepo{}
+var _ ProgrammeStore = &Store{}
 
 // New will create a new programme
 //
 // This requires at least one video in the Videos slice
-func (r *ProgrammeRepo) New(ctx context.Context, p Programme) error {
+func (r *Store) New(ctx context.Context, p Programme) error {
 	err := utils.Transact(r.db, func(tx *sqlx.Tx) error {
 		programmeID := 0
 		err := tx.QueryRowContext(ctx, `
@@ -51,7 +51,7 @@ func (r *ProgrammeRepo) New(ctx context.Context, p Programme) error {
 }
 
 // Get retrives a programme by it's programmeID
-func (r *ProgrammeRepo) Get(ctx context.Context, programmeID int) (*Programme, error) {
+func (r *Store) Get(ctx context.Context, programmeID int) (*Programme, error) {
 	p := Programme{}
 	err := utils.Transact(r.db, func(tx *sqlx.Tx) error {
 		err := tx.SelectContext(ctx, &p, `
@@ -78,7 +78,7 @@ func (r *ProgrammeRepo) Get(ctx context.Context, programmeID int) (*Programme, e
 }
 
 // Delete removes a programme by programmeID
-func (r *ProgrammeRepo) Delete(ctx context.Context, programmeID int) error {
+func (r *Store) Delete(ctx context.Context, programmeID int) error {
 	res, err := r.db.ExecContext(ctx, `
 	DELETE FROM playout.programmes
 	WHERE programme_id = $1`, programmeID)
