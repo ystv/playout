@@ -12,7 +12,7 @@ var _ piper.InputStore = &Brave{}
 
 // New creates a new input
 func (b *Brave) New(ctx context.Context, i piper.NewInput) error {
-
+	return nil
 }
 
 // Delete removes the input

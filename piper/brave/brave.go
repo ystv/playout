@@ -98,6 +98,7 @@ func New(ctx context.Context, p piper.New) (*Brave, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to brave: %w", err)
 	}
+	defer res.Body.Close()
 
 	reqBody := Mixer{
 		Height: p.Height,
@@ -150,9 +151,7 @@ func (b *Brave) GetState() (*piper.State, error) {
 			Height: bInput.Height,
 		})
 	}
-	for _, bMixer := range b.state.Mixers {
-		p.Composition
-	}
+
 	for _, bOutput := range b.state.Outputs {
 		p.Outputs = append(p.Outputs, piper.Output{
 			URL: bOutput.URI,

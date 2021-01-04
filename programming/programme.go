@@ -2,6 +2,7 @@ package programming
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/ystv/playout/utils"
@@ -31,7 +32,7 @@ func (r *Store) New(ctx context.Context, p Programme) error {
 			return fmt.Errorf("failed to insert meta: %w", err)
 		}
 		if len(p.Videos) == 0 {
-			return nil
+			return errors.New("no videos in playlist")
 		}
 		stmt, err := tx.PrepareContext(ctx, `
 		INSERT INTO playout.programme_videos(programme_id, url)

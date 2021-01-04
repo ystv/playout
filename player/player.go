@@ -1,6 +1,8 @@
 package player
 
-import "context"
+import (
+	"context"
+)
 
 // Player will create a stream to playout a programme
 type Player interface {

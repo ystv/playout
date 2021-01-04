@@ -1,6 +1,10 @@
 package programming
 
-import "context"
+import (
+	"context"
+
+	"github.com/jmoiron/sqlx"
+)
 
 type (
 	// ProgrammeStore handles managing programmes
@@ -36,8 +40,9 @@ type (
 	}
 )
 
-// Run will execute a program to be played out
-func (p *Programme) Run(ctx context.Context) error {
-
-	return nil
+func New(db *sqlx.DB) *Store {
+	p := &Store{
+		db: db,
+	}
+	return p
 }

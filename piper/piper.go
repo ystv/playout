@@ -27,7 +27,7 @@ type (
 type (
 	// InputStore handles ingesting a video source to our composition
 	InputStore interface {
-		New(ctx context.Context, url string) error
+		New(ctx context.Context, i NewInput) error
 		Delete(ctx context.Context, sourceID int) error
 	}
 	// InputObject methods providing individual control over source

@@ -1,21 +1,23 @@
 # playout
 
-A potentional multi-pipeline scheduled playout system
+A potentional multi-pipeline scheduled playout system.
 
-## Things to be implemented
+## Notes
 
-* Web UI
-    * Functions
-        * Take (will force play selected item)
-        * Freeze (Freeze frame current item)
-        * Feed (Swap video source to ingest_url)
-        * Slate (Swap video source to fallback)
-        * Retake (restart current video item)
-        * Abort (skip current video item)
+* Uses the system's local time for scheduler and querying
 
-* Video management
-    * Create a playbook (playlist of videos, with select idents)
+## Dependencies
 
+* postgres
+* vt
+* brave
+
+## Building
+
+Developed from Go 1.13+
+
+`go build ./cmd/playout`
+`./playout`
 
 ## Design
 
