@@ -16,7 +16,7 @@ A potentional multi-pipeline scheduled playout system.
 
 Developed from Go 1.13+
 
-`go build ./cmd/playout`
+`go build ./cmd/playout`  
 `./playout`
 
 ## Design

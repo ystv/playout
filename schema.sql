@@ -84,7 +84,7 @@ CREATE TABLE playout.channel(
 );
 
 COMMENT ON COLUMN playout.channel(type) IS
-'24/7 or linear. So if we still wanted our main stream 24/7 but we''ve also got a one off B stream';
+'linear or event. So if we still wanted our main stream 24/7 but we''ve also got a one off B stream';
 COMMENT ON COLUMN playout.channel(origin_url) IS
 'where we pull the video from, so this video that
 is pulled is the product of the schedule.
