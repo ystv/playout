@@ -30,16 +30,17 @@ type (
 	// Schedule handles assigning jobs to the player
 	Schedule interface {
 		MainLoop(ctx context.Context) error
+		NewBlock(ctx context.Context, b NewBlock) error
 		Schedule(ctx context.Context, b Block) error
-		Delete(ctx context.Context, scheduleItemID int) error
+		Delete(ctx context.Context, blockID int) error
 		// Our gets are always arrays since it isn't channel specific
 		GetCurrent(ctx context.Context) ([]Block, error)
 		GetRange(ctx context.Context, start time.Time, end time.Time) ([]Block, error)
 		GetAmount(ctx context.Context, amount int) ([]Block, error)
 		Reload(ctx context.Context) error
 	}
-	// NewScheduleItem object required for adding to the schedule
-	NewScheduleItem struct {
+	// NewBlock object required for adding to the schedule
+	NewBlock struct {
 		ChannelID   int       `db:"channel_id" json:"channelID"`
 		ProgrammeID int       `db:"programme_id" json:"programmeID"`
 		IngestURL   string    `db:"ingest_url" json:"ingestURL"`
@@ -81,8 +82,19 @@ func New(db *sqlx.DB) (*Scheduler, error) {
 	return s, nil
 }
 
-// Reload will add a queueSize amount of jobs to the list
+// Reload will add a queueSize amount of blocks to the scheduler
 func (s *Scheduler) Reload(ctx context.Context) error {
+	// Get the blocks to be played next
+	blocks, err := s.GetAmount(ctx, s.queueSize)
+	if err != nil {
+		return fmt.Errorf("Reload failed to get blocks: %w", err)
+	}
+	// Empty scheduler of old blocks
+	s.sch.Clear()
+	// Add new blocks
+	for _, block := range blocks {
+		s.Schedule(ctx, block)
+	}
 	return nil
 }
 
@@ -149,7 +161,7 @@ func (s *Scheduler) GetAmount(ctx context.Context, amount int) ([]Block, error) 
 	FROM playout.schedule
 	
 	WHERE broadcast_start > $1
-	LIMIT $2`, time.Now(), amount)
+	LIMIT $2;`, time.Now(), amount)
 	if err != nil {
 		return nil, fmt.Errorf("failed to select get amount: %w", err)
 	}
@@ -166,7 +178,9 @@ func (s *Scheduler) GetCurrent(ctx context.Context) ([]Block, error) {
 		
 	FROM playout.schedule
 	
-	WHERE $1 >= broadcast_start AND broadcast_end <= $1;`, time.Now())
+	WHERE $1 >= broadcast_start
+	AND (broadcast_end <= $1 OR broadcast_end IS NULL)
+	AND (scheduled_time <= $1) AND scheduled_time >= $1;`, time.Now())
 	if err != nil {
 		return nil, fmt.Errorf("failed to select get range: %w", err)
 	}

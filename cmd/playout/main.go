@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	// PostgreSQL driver
 	_ "github.com/lib/pq"
@@ -32,6 +33,7 @@ func main() {
 	}
 	r := mux.NewRouter()
 	r.HandleFunc("/", handleIndex).Methods("GET")
+	mount(r, "/schedule", s.Router())
 
 	log.Fatal(http.ListenAndServe("0.0.0.0:7070", r))
 }
@@ -39,6 +41,16 @@ func main() {
 func handleIndex(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("playout (v0.0.2)"))
 	w.WriteHeader(http.StatusOK)
+}
+
+// mount another mux router ontop of another
+func mount(r *mux.Router, path string, handler http.Handler) {
+	r.PathPrefix(path).Handler(
+		http.StripPrefix(
+			strings.TrimSuffix(path, "/"),
+			handler,
+		),
+	)
 }
 
 // newDatabase creates a new database connection
