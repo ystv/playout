@@ -12,16 +12,29 @@ type (
 		channels map[string]*Channel
 	}
 	Config struct {
-		VTEndpoint     string
-		OutputEndpoint string
+		VTEndpoint string
+		Endpoints  []Endpoint
+	}
+	Endpoint struct {
+		Type string
+		URL  string
 	}
 )
 
 func New() *Channels {
 	ch := &Channels{
 		conf: Config{
-			VTEndpoint:     "http://localhost:7071",
-			OutputEndpoint: "http://localhost:7072",
+			VTEndpoint: "http://localhost:7071",
+			Endpoints: []Endpoint{
+				{
+					Type: "rtmp",
+					URL:  "rtmp://stream.ystv.co.uk/internal/",
+				},
+				{
+					Type: "hls",
+					URL:  "https://video-cdn.ystv.co.uk/",
+				},
+			},
 		},
 		channels: make(map[string]*Channel),
 	}
@@ -37,12 +50,12 @@ func (ch *Channels) New(ctx context.Context, newCh NewChannelStruct) (*Channel, 
 		Name:        newCh.Name,
 		Description: newCh.Description,
 		ChannelType: newCh.ChannelType,
-		OriginURL:   newCh.OriginURL,
+		IngestURL:   newCh.IngestURL,
+		IngestType:  newCh.IngestType,
 		SlateURL:    newCh.SlateURL,
-		Renditions:  newCh.Renditions,
+		Outputs:     newCh.Outputs,
 		Archive:     newCh.Archive,
 		DVR:         newCh.DVR,
-		OriginOnly:  newCh.OriginOnly,
 	}
 	channel.Status = "pending"
 
