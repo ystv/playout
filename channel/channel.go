@@ -25,10 +25,10 @@ type (
 		ChannelType string // event / linear
 		IngestURL   string
 		IngestType  string   // RTP / RTMP / HLS
-		SlateURL    string   // fallback video
+		SlateURL    string   // Fallback video
 		Outputs     []Output // Configured outputs
 		Archive     bool     // Add to VOD after
-		DVR         bool     // can rewind
+		DVR         bool     // Can rewind
 		Passthrough bool     // Encoding needed
 		CreatedAt   time.Time
 		Status      string // The state of channel ready / running / starting / stopping / pending
