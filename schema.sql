@@ -230,8 +230,14 @@ COMMENT ON COLUMN playout.schedule_blocks.vod_url IS
 'If archive was enabled for block (if not user set use channel''s default),
 the outputted video asset. Usually a page featuring the video';
 
+-- I suppose this doesn't need to be here since we could have someone stream directly
+-- to piper. But thinking about it we'll want this to probably be someone unique so we
+-- can have multiple sources at the ready then piper can select what it needs. Perhaps
+-- if piper was disabled, then it will just be channel's ingest_url.
 COMMENT ON COLUMN playout.schedule_blocks.ingest_url IS
-'Where the broadcaster will stream to. Utilised by Player to forward the feed to piper''s ingest';
+'Where the broadcaster / player will stream to. The ingest_url will either be
+* channel''s ingest_url (piper disabled)
+* piper''s ingest_url (piper enabled).';
 
 COMMENT ON COLUMN playout.schedule_blocks.ingest_type IS
 'rtmp/rtp/hls';

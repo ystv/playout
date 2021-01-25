@@ -4,6 +4,7 @@ A potentional multi-pipeline scheduled playout system.
 
 ## Notes
 
+* [Query development](queries.md)
 * Uses the system's local time for scheduler and querying
 
 ## Dependencies
@@ -20,6 +21,8 @@ Developed from Go 1.13+
 `./playout`
 
 ## Design
+
+> Also don't forget to checkout the schema as well. It is heavily documented and commented.
 
 Made of a few elements
 ### Public-API
@@ -54,7 +57,7 @@ Made of a few elements
     * There are some generic characteristics
     * It will inherit it's properties from the schedule though
 
-### Playout generator
+### Player (playout generator)
 * This is an automatic element
     * So it could be replaced by something manual if necessary?
 * Will receive a programme playbook and attempt to follow it and output a signal to an ingest point (not the channel ingest point) where piper will pick it up and play it out.

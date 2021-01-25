@@ -32,13 +32,26 @@ INSERT INTO playout.schedule_blocks
 (channel_id, programme_id, ingest_url, ingest_type,
 scheduled_start, scheduled_end)
 VALUES
+-- channel 1
 (1, 2, 'rtp://media-land.ystv.co.uk/player/e45t', 'rtp',
 '2020-01-21 09:00:00.000', '2020-01-21 09:45:00.000'),
 (1, 5, 'rtp://media-land.ystv.co.uk/player/ftge', 'rtp',
 '2020-01-21 09:45:00.000', '2020-01-21 10:00:00.000'),
 (1, 1, 'rtp://media-ingest.ystv.co.uk/ob2', 'rtp',
 '2020-01-21 10:30:00.000', '2020-01-21 12:00:00.000'),
+(1, 2, 'rtp://media-land.ystv.co.uk/player/4rft', 'rtp',
+'2020-01-21 14:00:00.000', '2020-01-21 14:45:00.000')
+-- channel 2
 (2, 3, 'rtp://media-ingest.ystv.co.uk/ob1', 'rtp',
 '2020-01-21 09:00:00.000', '2020-01-21 11:00:00.000'),
 (2, 4, 'rtp://media-land.ystv.co.uk/player/j67u', 'rtp',
 '2020-01-21 11:00:00.000', '2020-01-21 12:00:00.000');
+
+-- so channel 1's schedule looks like
+
+-- 09:00 - 09:45 prog 2
+-- 09:45 - 10:00 prog 5
+-- 10:00 - 10:30 nothing
+-- 10:30 - 12:00 prog 1
+-- 12:00 - 14:00 nothing
+-- 14:00 - 14:45 prog 2
