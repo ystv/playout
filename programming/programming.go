@@ -1,3 +1,4 @@
+// Package programming is content either live or VOD, which can be used in multiple blocks
 package programming
 
 import (
@@ -28,9 +29,11 @@ type (
 	// content, and a player won't be made.
 	Programme struct {
 		ID          int     `db:"programme_id" json:"id"`
-		Title       string  `db:"title"`
-		Description string  `db:"description"`
-		Thumbnail   string  `db:"thumbnail"`
+		Title       string  `db:"title" json:"title"`
+		Description string  `db:"description" json:"description"`
+		Thumbnail   string  `db:"thumbnail" json:"thumbnail"`
+		Type        string  `db:"type" json:"type"`
+		VODURL      string  `db:"vod_url" json:"vodURL"`
 		Videos      []Video `json:"videos"`
 	}
 	// Video is the individual video to be played out
@@ -40,8 +43,14 @@ type (
 	}
 )
 
-func New(db *sqlx.DB) *Store {
-	p := &Store{
+// Programmer allows programming to be stored
+type Programmer struct {
+	db *sqlx.DB
+}
+
+// New creates a new programmer instance
+func New(db *sqlx.DB) *Programmer {
+	p := &Programmer{
 		db: db,
 	}
 	return p

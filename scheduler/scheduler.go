@@ -21,7 +21,7 @@ type Scheduler struct {
 	// dependencies
 	db   *sqlx.DB
 	sch  *gocron.Scheduler
-	prog *programming.Store
+	prog *programming.Programmer
 	play *vt.Player
 	log  *log.Logger
 }

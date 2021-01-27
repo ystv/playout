@@ -166,6 +166,7 @@ COMMENT ON COLUMN playout.programmes.description IS
 'Length <= 240. Trying to keep it in similar look to EPG? If they want more, they
 can use the VOD link';
 
+-- Does handling something like a TV tuner require a different type to live?
 COMMENT ON COLUMN playout.programmes.type IS
 'vod / live';
 

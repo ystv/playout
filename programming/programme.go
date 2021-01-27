@@ -10,27 +10,23 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-// Store encapsulates our dependency
-type Store struct {
-	db *sqlx.DB
-}
-
-var _ ProgrammeStore = &Store{}
+var _ ProgrammeStore = &Programmer{}
 
 // New will create a new programme
 //
 // This requires at least one video in the Videos slice
-func (r *Store) New(ctx context.Context, p Programme) error {
+func (r *Programmer) New(ctx context.Context, p Programme) error {
 	err := utils.Transact(r.db, func(tx *sqlx.Tx) error {
 		programmeID := 0
 		err := tx.QueryRowContext(ctx, `
-		INSERT INTO playout.programmes(title, description, thumbnail)
-		VALUES ($1, $2, $3)
+		INSERT INTO playout.programmes(title, description, thumbnail, type, vod_url)
+		VALUES ($1, $2, $3, $4, $5)
 		RETURNING programme_id;`,
-			p.Title, p.Description, p.Thumbnail).Scan(&programmeID)
+			p.Title, p.Description, p.Thumbnail, p.Type, p.VODURL).Scan(&programmeID)
 		if err != nil {
 			return fmt.Errorf("failed to insert meta: %w", err)
 		}
+		// Only length can be zero when it is a live source
 		if len(p.Videos) == 0 {
 			return errors.New("no videos in playlist")
 		}
@@ -52,7 +48,7 @@ func (r *Store) New(ctx context.Context, p Programme) error {
 }
 
 // Get retrives a programme by it's programmeID
-func (r *Store) Get(ctx context.Context, programmeID int) (*Programme, error) {
+func (r *Programmer) Get(ctx context.Context, programmeID int) (*Programme, error) {
 	p := Programme{}
 	err := utils.Transact(r.db, func(tx *sqlx.Tx) error {
 		err := tx.SelectContext(ctx, &p, `
@@ -79,7 +75,7 @@ func (r *Store) Get(ctx context.Context, programmeID int) (*Programme, error) {
 }
 
 // Delete removes a programme by programmeID
-func (r *Store) Delete(ctx context.Context, programmeID int) error {
+func (r *Programmer) Delete(ctx context.Context, programmeID int) error {
 	res, err := r.db.ExecContext(ctx, `
 	DELETE FROM playout.programmes
 	WHERE programme_id = $1`, programmeID)
