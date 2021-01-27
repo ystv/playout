@@ -17,16 +17,3 @@ func (s *Scheduler) MainLoop(ctx context.Context) error {
 	}
 	return nil
 }
-
-func (s *Scheduler) validateSchedule() {
-	/*
-		We want to ensure that there will always be
-		something playing, so we will check that there
-		are blocks present.
-
-		* Check DN are there empty spaces
-
-		nice to have
-		* Validate live sources before live
-	*/
-}

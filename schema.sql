@@ -6,7 +6,7 @@ CREATE SCHEMA playout;
 -- Ideally we'll have 4 24/7 streams:
 -- * ystv public site (done by appointed person or by bot) Make sure content is "safe"
 -- * ysmtv University produced only music
--- * ystv internal site (anyone can request, pop a random url or file. Doesn't have to be "safe")
+-- * ystv internal site (anyone can request, pop a random url or file. Doesn't have to be "safe"), OB behind the scenes cam, meetings, etc
 -- * yusu (done by appointed person or bot) Mostly bar football, but also important streams
 -- * university (done by appointed person or bot) mostly university signage, more
 -- functionality for them, but we can use it for things like Roses

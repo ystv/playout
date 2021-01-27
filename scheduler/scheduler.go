@@ -39,6 +39,11 @@ type (
 		GetAmount(ctx context.Context, amount int) ([]Block, error)
 		Reload(ctx context.Context) error
 	}
+	// Health handles ensuring the schedule is in a healthy state such as no gaps in playout
+	// and ingest_url's have data when required
+	Health interface {
+		FindIslands(ctx context.Context, channelID int) ([]Island, error)
+	}
 	// NewBlock object required for adding to the schedule
 	NewBlock struct {
 		ChannelID   int       `db:"channel_id" json:"channelID"`
