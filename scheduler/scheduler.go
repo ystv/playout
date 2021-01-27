@@ -30,7 +30,7 @@ type (
 	// Schedule handles assigning jobs to the player
 	Schedule interface {
 		MainLoop(ctx context.Context) error
-		NewBlock(ctx context.Context, b NewBlock) error
+		NewBlock(ctx context.Context, b NewBlock) (int, error)
 		Schedule(ctx context.Context, b Block) error
 		Delete(ctx context.Context, blockID int) error
 		// Our gets are always arrays since it isn't channel specific
@@ -44,6 +44,7 @@ type (
 		ChannelID   int       `db:"channel_id" json:"channelID"`
 		ProgrammeID int       `db:"programme_id" json:"programmeID"`
 		IngestURL   string    `db:"ingest_url" json:"ingestURL"`
+		IngestType  string    `db:"ingest_type" json:"ingestType"`
 		Start       time.Time `db:"scheduled_start" json:"start"`
 		End         time.Time `db:"scheduled_end" json:"end"`
 	}
@@ -52,8 +53,10 @@ type (
 		BlockID     int `db:"block_id" json:"blockID"`
 		ChannelID   int `db:"channel_id" json:"channelID"`
 		ProgrammeID int `db:"programme_id" json:"programmeID"`
-		// IngestURL where the playout should be outputted too
-		IngestURL      string    `db:"ingest_url" json:"url"`
+		// IngestURL where the player should broadcast to, where it is then picked up
+		// by either channel or piper
+		IngestURL      string    `db:"ingest_url" json:"ingestURL"`
+		IngestType     string    `db:"ingest_type" json:"ingestType"`
 		ScheduledStart time.Time `db:"scheduled_start" json:"scheduledStart"`
 		BroadcastStart time.Time `db:"broadcast_start" json:"broadcastStart"`
 		ScheduledEnd   time.Time `db:"scheduled_end" json:"scheduledEnd"`
@@ -82,7 +85,7 @@ func New(db *sqlx.DB) (*Scheduler, error) {
 	return s, nil
 }
 
-// Reload will add a queueSize amount of blocks to the scheduler
+// Reload will add a queueSize amount of blocks to the scheduler cache
 func (s *Scheduler) Reload(ctx context.Context) error {
 	// Get the blocks to be played next
 	blocks, err := s.GetAmount(ctx, s.queueSize)
