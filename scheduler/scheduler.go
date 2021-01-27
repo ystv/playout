@@ -45,6 +45,9 @@ type (
 		FindIslands(ctx context.Context, channelID int) ([]Island, error)
 	}
 	// NewBlock object required for adding to the schedule
+	//
+	// Doesn't contain the historic broadcast date
+	// in comparision to the main object
 	NewBlock struct {
 		ChannelID   int       `db:"channel_id" json:"channelID"`
 		ProgrammeID int       `db:"programme_id" json:"programmeID"`
@@ -66,6 +69,9 @@ type (
 		BroadcastStart time.Time `db:"broadcast_start" json:"broadcastStart"`
 		ScheduledEnd   time.Time `db:"scheduled_end" json:"scheduledEnd"`
 		BroadcastEnd   time.Time `db:"broadcast_end" json:"broadcastEnd"`
+		VODURL         string    `db:"vod_url" json:"vodURL"`
+		DVR            bool      `db:"dvr" json:"dvr"`
+		Archive        bool      `db:"archive" json:"archive"`
 	}
 )
 
@@ -149,7 +155,7 @@ func (s *Scheduler) GetRange(ctx context.Context, start, end time.Time) ([]Block
 	SELECT block_id, channel_id, programme_id, ingest_url,
 		scheduled_start, broadcast_start, scheduled_end, broadcast_end
 		
-	FROM playout.schedule
+	FROM playout.schedule_blocks
 	
 	WHERE broadcast_start BETWEEN $1 AND $2;`, start, end)
 	if err != nil {
@@ -166,7 +172,7 @@ func (s *Scheduler) GetAmount(ctx context.Context, amount int) ([]Block, error) 
 	SELECT block_id, channel_id, programme_id, ingest_url,
 		scheduled_start, broadcast_start, scheduled_end, broadcast_end
 		
-	FROM playout.schedule
+	FROM playout.schedule_blocks
 	
 	WHERE broadcast_start > $1
 	LIMIT $2;`, time.Now(), amount)
@@ -184,7 +190,7 @@ func (s *Scheduler) GetCurrent(ctx context.Context) ([]Block, error) {
 	SELECT block_id, channel_id, programme_id, ingest_url,
 		scheduled_start, broadcast_start, scheduled_end, broadcast_end
 		
-	FROM playout.schedule
+	FROM playout.schedule_blocks
 	
 	WHERE $1 >= broadcast_start
 	AND (broadcast_end <= $1 OR broadcast_end IS NULL)
