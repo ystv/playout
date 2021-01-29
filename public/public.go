@@ -1,9 +1,9 @@
+// Package public offers an API of the channels and their content schedule
 package public
 
 import "github.com/ystv/playout/channel"
 
-// This offers an API of the channels and their content schedule
-
-type Store struct {
-	chs channel.Channels
+// Publicer publicises the playout system
+type Publicer struct {
+	mcr channel.MCR
 }

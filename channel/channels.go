@@ -2,27 +2,33 @@ package channel
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math/rand"
 )
 
 type (
-	Channels struct {
+	// MCR manages a group of channels
+	MCR struct {
 		conf     Config
 		channels map[string]*Channel
 	}
+	// Config to specify available endpoints
 	Config struct {
 		VTEndpoint string
 		Endpoints  []Endpoint
 	}
+	// Endpoint a usable output by playout
 	Endpoint struct {
 		Type string
 		URL  string
 	}
 )
 
-func New() *Channels {
-	ch := &Channels{
+// NewMCR creates a new "Master Control Room"
+// effictively manages a group of channels
+func NewMCR() *MCR {
+	mcr := &MCR{
 		conf: Config{
 			VTEndpoint: "http://localhost:7071",
 			Endpoints: []Endpoint{
@@ -38,14 +44,20 @@ func New() *Channels {
 		},
 		channels: make(map[string]*Channel),
 	}
-	return ch
+	return mcr
 }
 
-func (ch *Channels) Get(ctx context.Context, channelID string) (*Channel, error) {
-	return ch.channels[channelID], nil
+// GetChannel retrieves a channel from playout
+func (mcr *MCR) GetChannel(ctx context.Context, channelID string) (*Channel, error) {
+	ch, ok := mcr.channels[channelID]
+	if !ok {
+		return nil, errors.New("channel doesn't exist")
+	}
+	return ch, nil
 }
 
-func (ch *Channels) New(ctx context.Context, newCh NewChannelStruct) (*Channel, error) {
+// NewChannel creates a new channel to playout
+func (mcr *MCR) NewChannel(ctx context.Context, newCh NewChannelStruct) (*Channel, error) {
 	channel := &Channel{
 		Name:        newCh.Name,
 		Description: newCh.Description,
@@ -61,24 +73,25 @@ func (ch *Channels) New(ctx context.Context, newCh NewChannelStruct) (*Channel, 
 
 	for {
 		channel.ID = randString()
-		_, exists := ch.channels[channel.ID]
+		_, exists := mcr.channels[channel.ID]
 		if !exists {
 			break
 		}
 	}
 
-	ch.channels[channel.ID] = channel
+	mcr.channels[channel.ID] = channel
 
 	return channel, nil
 }
 
-func (ch *Channels) Delete(channelID string) error {
-	if _, ok := ch.channels[channelID]; ok {
-		err := ch.channels[channelID].Stop()
+// DeleteChannel removes a channel from playout
+func (mcr *MCR) DeleteChannel(channelID string) error {
+	if _, ok := mcr.channels[channelID]; ok {
+		err := mcr.channels[channelID].Stop()
 		if err != nil {
 			return fmt.Errorf("failed to delete channel: %w", err)
 		}
-		delete(ch.channels, channelID)
+		delete(mcr.channels, channelID)
 	}
 	return nil
 }

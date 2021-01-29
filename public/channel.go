@@ -9,6 +9,7 @@ type Channel struct {
 	OutputURL    string
 }
 
-func (s *Store) GetAll(ctx context.Context) ([]Channel, error) {
+// GetAll retrieves all channels
+func (p *Publicer) GetAll(ctx context.Context) ([]Channel, error) {
 	return nil, nil
 }
