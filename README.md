@@ -29,9 +29,31 @@ Developed from Go 1.13+
 `go build ./cmd/playout`  
 `./playout`
 
+## Simplified overview
+
+The root is playout, provides a little API to create the child MCR's.
+
+MCR's are groups of channels.
+
+Channels are the video pipes which ingest a source then create multiple renditions (future versions will have backup source support and slate card support). It doesn't introduce much overhead.
+
+Channels also have two extra optional modules:
+* A Piper
+* A Scheduler
+
+The piper acts as a safety buffer to a channel's ingest, and swapping between different sources but keeping the output always on.
+
+The scheduler will provide a television schedule to a channel so it will have content to play that out.
+* A subroutine which will trigger piper to swap sources to what is on the schedule
+* Triggers a player to the channel's ingest (which can be proxied by piper).
+
+Player will playout a programme.
+
 ## Design
 
 > Also don't forget to checkout the schema as well. It is heavily documented and commented.
+
+> This might be out-of-date, so check code / schema or simplified overview.
 
 Made of a few elements
 ### Public-API
