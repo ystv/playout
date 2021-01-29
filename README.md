@@ -9,18 +9,18 @@ A potentional multi-pipeline scheduled playout system.
 
 ## Dev notes
 
-* Are we wanting to separate inverse the channel scheduler relationship?
-This would be where a channel would store a schedule_id instead of a schedule
-storing a channel_id. This then introduced a relationship where a channel will
-always have a schedule, which isn't always true (could just be nullable on the database but I'd prefer if channel was the root element).
-See the issue is that they both don't need to know about each other or well they have equal importance making it hard to decide which one is the top dog
+* Are we wanting to separate inverse the channel scheduler relationship?  
+This would be where a channel would store a schedule_id instead of a schedule storing a channel_id.  
+This then introduced a relationship where a channel will
+always have a schedule, which isn't always true (could just be nullable on the database but I'd prefer if channel was the root element).  
+See the issue is that they both don't need to know about each other or well they have equal importance making it hard to decide which one is the top dog.
 
 
 ## Dependencies
 
-* postgres
-* vt
-* brave
+* [postgres](https://www.postgresql.org/)
+* [vt](https://github.com/ystv/video-transcode)
+* [brave](https://github.com/bbc/brave)
 
 ## Building
 
