@@ -1,9 +1,7 @@
 package main
 
 import (
-	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -13,9 +11,9 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
-	"github.com/ystv/playout/scheduler"
 )
 
+/*
 func main() {
 	log.Println("playout (v0.0.2) by Rhys Milling")
 	db, err := newDatabase()
@@ -37,6 +35,7 @@ func main() {
 
 	log.Fatal(http.ListenAndServe("0.0.0.0:7070", r))
 }
+*/
 
 func handleIndex(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("playout (v0.0.2)"))
