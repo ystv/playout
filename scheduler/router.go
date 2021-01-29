@@ -33,9 +33,9 @@ func (s *Scheduler) newBlock(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	req := struct {
-		blockID int `json:"blockID"`
+		BlockID int `json:"blockID"`
 	}{
-		blockID: blockID,
+		BlockID: blockID,
 	}
 
 	err = json.NewEncoder(w).Encode(req)

@@ -17,7 +17,7 @@ type Island struct {
 //
 // There should only be one island, more than
 // one are caused by gaps in the schedule
-func (s *Scheduler) FindIslands(ctx context.Context, channelID int) ([]Island, error) {
+func (s *Scheduler) FindIslands(ctx context.Context) ([]Island, error) {
 	// We want to ensure that there will always be
 	// something playing, so we will check that there
 	// are blocks present.
@@ -54,7 +54,7 @@ func (s *Scheduler) FindIslands(ctx context.Context, channelID int) ([]Island, e
 		GROUP BY
 			island_id
 		ORDER BY
-			island_start;`, channelID)
+			island_start;`, s.ch.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find islands: %w", err)
 	}

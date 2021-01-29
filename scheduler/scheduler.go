@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-co-op/gocron"
 	"github.com/jmoiron/sqlx"
+	"github.com/ystv/playout/channel"
 	"github.com/ystv/playout/player"
 	"github.com/ystv/playout/player/vt"
 	"github.com/ystv/playout/programming"
@@ -20,6 +21,7 @@ type Scheduler struct {
 	queueSize int
 	// dependencies
 	db   *sqlx.DB
+	ch   *channel.Channel
 	sch  *gocron.Scheduler
 	prog *programming.Programmer
 	play *vt.Player
@@ -78,7 +80,7 @@ type (
 // New creates a new scheduler instance
 //
 // Scheduler handles assigning jobs to the player
-func New(db *sqlx.DB) (*Scheduler, error) {
+func New(db *sqlx.DB, ch *channel.Channel) (*Scheduler, error) {
 	err := db.Ping()
 	if err != nil {
 		return nil, fmt.Errorf("failed to ping DB: %w", err)
@@ -89,6 +91,7 @@ func New(db *sqlx.DB) (*Scheduler, error) {
 	}
 	s := &Scheduler{
 		db:   db,
+		ch:   ch,
 		sch:  gocron.NewScheduler(time.Local),
 		prog: programming.New(db),
 		play: p,
