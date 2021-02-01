@@ -31,9 +31,9 @@ Developed from Go 1.13+
 
 ## Simplified overview
 
-The root is playout, provides a little API to create the child MCR's.
+The repo offers a bukly application `cmd/playout` which produces an MCR. Possibly in the future each module could be build separately.
 
-MCR's are groups of channels.
+MCR manages and groups channels
 
 Channels are the video pipes which ingest a source then create multiple renditions (future versions will have backup source support and slate card support). It doesn't introduce much overhead.
 
