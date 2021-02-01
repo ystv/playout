@@ -153,42 +153,40 @@ func (ch *Channel) Start() error {
 				idx, rendition.Width, rendition.Height, // resolution
 				idx, // profile
 			)
+		}
+		outputString := ""
+		switch output.Type {
+		case "rtp":
+			log.Println("rtp out")
+			outputString = fmt.Sprintf(`-f rtp "%s"`, output.Destination)
 
-			outputString := ""
-			switch output.Type {
-			case "rtp":
-				log.Println("rtp out")
-				outputString = fmt.Sprintf(`-f rtp "%s"`, output.Destination)
-
-			case "rtmp":
-				log.Println("rtmp out")
-				outputString = fmt.Sprintf(`-f flv "%s"`, output.Destination)
-			case "hls":
-				log.Println("hls out")
-				// Output
-				outputString = fmt.Sprintf(`
+		case "rtmp":
+			log.Println("rtmp out")
+			outputString = fmt.Sprintf(`-f flv "%s"`, output.Destination)
+		case "hls":
+			log.Println("hls out")
+			// Output
+			outputString = fmt.Sprintf(`
 				-keyint_min 120 -g 120 -sc_threshold 0 -use_timeline 1
 				-use_template 1 -window_size 5
 				-adaptation_sets "id=0,streams=v id=1,streams=a"
 				-hls_playlist 1 -seg_duration 4 -streaming 1
 				-remove_at_exit 1 -method PUT -f hls "%s"`, output.Destination)
 
-			case "dash":
-				return errors.New("dash not implemented")
+		case "dash":
+			return errors.New("dash not implemented")
 
-			case "cmaf":
-				return errors.New("cmaf not implemented")
+		case "cmaf":
+			return errors.New("cmaf not implemented")
 
-			default:
-				return errors.New("unknown output type")
-			}
-
-			// Combine to an executable string
-			removeInsideWhitespace := regexp.MustCompile(`[\s\p{Zs}]{2,}`)
-			cmd := strings.ReplaceAll(fmt.Sprintf("%s %s %s %s", inputArgs, audioString, encode, outputString), "\n", "")
-			cmd = removeInsideWhitespace.ReplaceAllString(cmd, " ")
-			log.Println(cmd)
+		default:
+			return errors.New("unknown output type")
 		}
+		// Combine to an executable string
+		removeInsideWhitespace := regexp.MustCompile(`[\s\p{Zs}]{2,}`)
+		cmd := strings.ReplaceAll(fmt.Sprintf("%s %s %s %s", inputArgs, audioString, encode, outputString), "\n", "")
+		cmd = removeInsideWhitespace.ReplaceAllString(cmd, " ")
+		log.Println(cmd)
 	}
 	ch.Status = "playing"
 	return nil
