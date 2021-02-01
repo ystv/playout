@@ -104,12 +104,17 @@ func (ch *Channel) Start() error {
 		inputArgs := ""
 		switch ch.IngestType {
 		case "rtmp":
-			inputArgs = fmt.Sprintf(`-re -stream_loop 1 -f flv -i %s `, ch.IngestURL)
+			inputArgs = fmt.Sprintf(`-re -stream_loop 1 -f flv -i "%s" `, ch.IngestURL)
 
 		default:
-			inputArgs = fmt.Sprintf(`-re -stream_loop 1 -f %s -i %s `, ch.IngestType, ch.IngestURL)
+			inputArgs = fmt.Sprintf(`-re -stream_loop 1 -f %s -i "%s" `, ch.IngestType, ch.IngestURL)
 		}
-		mapString := strings.Repeat("-map 0 ", len(output.Renditions))
+		mapString := ""
+		if len(output.Renditions) == 0 {
+			mapString = "-map 0"
+		} else {
+			mapString = strings.Repeat("-map 0 ", len(output.Renditions)-1)
+		}
 		inputArgs = fmt.Sprintf("%s %s", inputArgs, mapString)
 
 		// Audio mux
@@ -127,7 +132,7 @@ func (ch *Channel) Start() error {
 				// TODO: nvenc codec's
 			}
 			encode = fmt.Sprintf(`
-					-vf scale=w=%d:h=%d:force_original_aspect_ratio=decrease
+					-vf "scale=w=%d:h=%d:force_original_aspect_ratio=decrease"
 					-b:v:%d %dk
 					-c:v:%d %s
 					-s:v:%d %dx%d 
@@ -144,20 +149,20 @@ func (ch *Channel) Start() error {
 			switch output.Type {
 			case "rtp":
 				log.Println("rtp out")
-				outputString = fmt.Sprintf("-f rtp %s", output.Destination)
+				outputString = fmt.Sprintf(`-f rtp "%s"`, output.Destination)
 
 			case "rtmp":
 				log.Println("rtmp out")
-				outputString = fmt.Sprintf("-f flv %s", output.Destination)
+				outputString = fmt.Sprintf(`-f flv "%s"`, output.Destination)
 			case "hls":
 				log.Println("hls out")
 				// Output
 				outputString = fmt.Sprintf(`
 				-keyint_min 120 -g 120 -sc_threshold 0 -use_timeline 1
 				-use_template 1 -window_size 5
-				-adaptation_sets "id=0,streams=v id=1,streams=a
+				-adaptation_sets "id=0,streams=v id=1,streams=a"
 				-hls_playlist 1 -seg_duration 4 -streaming 1
-				-remove_at_exit 1 -method PUT -f hls %s`, output.Destination)
+				-remove_at_exit 1 -method PUT -f hls "%s"`, output.Destination)
 
 			case "dash":
 				return errors.New("dash not implemented")
