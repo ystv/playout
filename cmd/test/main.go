@@ -7,9 +7,9 @@ import (
 	"os"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/ystv/playout/scheduler"
 
 	"github.com/ystv/playout/channel"
+	"github.com/ystv/playout/scheduler"
 )
 
 func main() {
@@ -23,7 +23,10 @@ func main() {
 		SlateURL:    "https://cdn.ystv.co.uk/ystv-holding.mp4",
 		Outputs: []channel.Output{
 			{
+				Name:        "website stream",
 				Type:        "hls",
+				Passthrough: false,
+				DVR:         true,
 				Destination: "https://live-media.ystv.co.uk/test123-manifest.m3u8",
 				Renditions: []channel.Rendition{
 					{
@@ -31,22 +34,26 @@ func main() {
 						Height:  1080,
 						Bitrate: 8000,
 						FPS:     25,
+						Codec:   "h264",
 					}, {
 						Width:   1280,
 						Height:  720,
 						Bitrate: 4000,
 						FPS:     25,
+						Codec:   "h264",
 					},
 				},
 			},
 			{
-				Passthrough: true,
+				Name:        "signage stream",
 				Type:        "rtmp",
+				Passthrough: true,
+				DVR:         false,
 				Destination: "rtmp://stream.ystv.co.uk/internal/test",
+				// RTMP type doesn't have renditions
 			},
 		},
 		Archive: true,
-		DVR:     true,
 	})
 	if err != nil {
 		log.Fatalf("failed to create new channel: %+v", err)

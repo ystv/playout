@@ -67,7 +67,6 @@ func (mcr *MCR) NewChannel(ctx context.Context, newCh NewChannelStruct) (*Channe
 		SlateURL:    newCh.SlateURL,
 		Outputs:     newCh.Outputs,
 		Archive:     newCh.Archive,
-		DVR:         newCh.DVR,
 	}
 	channel.Status = "pending"
 

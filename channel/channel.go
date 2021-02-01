@@ -26,10 +26,8 @@ type (
 		IngestURL   string
 		IngestType  string   // RTP / RTMP / HLS
 		SlateURL    string   // Fallback video
-		Outputs     []Output // Configured outputs
 		Archive     bool     // Add to VOD after
-		DVR         bool     // Can rewind
-		Passthrough bool     // Encoding needed
+		Outputs     []Output // Configured outputs
 		CreatedAt   time.Time
 		Status      string // The state of channel ready / running / starting / stopping / pending
 
@@ -45,9 +43,8 @@ type (
 		IngestURL   string
 		IngestType  string // RTSP / RTMP / HLS
 		SlateURL    string // fallback video
+		Archive     bool   // Add to VOD after
 		Outputs     []Output
-		Archive     bool // Add to VOD after
-		DVR         bool // can rewind
 	}
 )
 
@@ -57,9 +54,10 @@ type (
 	Output struct {
 		Name        string
 		Type        string // RTP / RTMP / HLS / DASH / CMAF
+		Passthrough bool
+		DVR         bool   // can rewind
 		Destination string // URL endpoint
 		Renditions  []Rendition
-		Passthrough bool
 	}
 	// Output types
 )
@@ -81,24 +79,33 @@ type (
 // Will create new tasks for VT, starting a new endpoint on the id/main.m3u8
 func (ch *Channel) Start() error {
 	for _, output := range ch.Outputs {
-		if ch.Passthrough {
+		if output.Passthrough {
 			// just copy
-
-			isDVR := ""
-			if ch.DVR {
-				isDVR = "-hls_playlist_type event"
-			}
 
 			t := Task{
 				SrcURL:  ch.IngestURL,
 				DstURL:  output.Destination,
-				DstArgs: fmt.Sprintf("-c:v h264 -f hls -hls_time %d %s -hls_segment_type fmp4 -method PUT", 4, isDVR),
+				DstArgs: "",
 			}
-			err := ch.NewStream(context.Background(), t)
-			if err != nil {
-				return err
+
+			switch output.Type {
+			case "rtmp":
+				t.DstArgs = `-c copy -f flv`
+			case "hls":
+				isDVR := ""
+				if output.DVR {
+					isDVR = "-hls_playlist_type event"
+				}
+				t.DstArgs = fmt.Sprintf(`-c copy -f hls -hls_time %d %s -hls_segment_type fmp4 -method PUT`, 4, isDVR)
+			default:
+				return errors.New("unknown output type")
 			}
-			ch.Status = "playing"
+
+			log.Printf("%+v", t)
+			// err := ch.NewStream(context.Background(), t)
+			// if err != nil {
+			// 	return err
+			// }
 			return nil
 		}
 		inputArgs := ""
@@ -130,6 +137,8 @@ func (ch *Channel) Start() error {
 			case "h265":
 				videoCodec = "libx265"
 				// TODO: nvenc codec's
+			default:
+				return errors.New("unknown codec")
 			}
 			encode = fmt.Sprintf(`
 					-vf "scale=w=%d:h=%d:force_original_aspect_ratio=decrease"
@@ -181,7 +190,7 @@ func (ch *Channel) Start() error {
 			log.Println(cmd)
 		}
 	}
-
+	ch.Status = "playing"
 	return nil
 }
 
