@@ -32,13 +32,13 @@ type (
 	// Schedule handles assigning jobs to the player
 	Schedule interface {
 		MainLoop(ctx context.Context) error
-		NewBlock(ctx context.Context, b NewBlock) (int, error)
-		Schedule(ctx context.Context, b Block) error
-		Delete(ctx context.Context, blockID int) error
+		NewPlayout(ctx context.Context, b NewPlayout) (int, error)
+		Schedule(ctx context.Context, b Playout) error
+		Delete(ctx context.Context, playoutID int) error
 		// Our gets are always arrays since it isn't channel specific
-		GetCurrent(ctx context.Context) ([]Block, error)
-		GetRange(ctx context.Context, start time.Time, end time.Time) ([]Block, error)
-		GetAmount(ctx context.Context, amount int) ([]Block, error)
+		GetCurrent(ctx context.Context) ([]Playout, error)
+		GetRange(ctx context.Context, start time.Time, end time.Time) ([]Playout, error)
+		GetAmount(ctx context.Context, amount int) ([]Playout, error)
 		Reload(ctx context.Context) error
 	}
 	// Health handles ensuring the schedule is in a healthy state such as no gaps in playout
@@ -46,11 +46,11 @@ type (
 	Health interface {
 		FindIslands(ctx context.Context, channelID int) ([]Island, error)
 	}
-	// NewBlock object required for adding to the schedule
+	// NewPlayout object required for adding to the schedule
 	//
 	// Doesn't contain the historic broadcast date
 	// in comparision to the main object
-	NewBlock struct {
+	NewPlayout struct {
 		ChannelID   int       `db:"channel_id" json:"channelID"`
 		ProgrammeID int       `db:"programme_id" json:"programmeID"`
 		IngestURL   string    `db:"ingest_url" json:"ingestURL"`
@@ -58,9 +58,9 @@ type (
 		Start       time.Time `db:"scheduled_start" json:"start"`
 		End         time.Time `db:"scheduled_end" json:"end"`
 	}
-	// Block the individual block that is played out as part of a channel
-	Block struct {
-		BlockID     int `db:"block_id" json:"blockID"`
+	// Playout the individual video stream that is played out as part of a channel
+	Playout struct {
+		PlayoutID   int `db:"playout_id" json:"playoutID"`
 		ChannelID   int `db:"channel_id" json:"channelID"`
 		ProgrammeID int `db:"programme_id" json:"programmeID"`
 		// IngestURL where the player should broadcast to, where it is then picked up
@@ -99,34 +99,34 @@ func New(db *sqlx.DB, ch *channel.Channel) (*Scheduler, error) {
 	return s, nil
 }
 
-// Reload will add a queueSize amount of blocks to the scheduler cache
+// Reload will add a queueSize amount of playouts to the scheduler cache
 func (s *Scheduler) Reload(ctx context.Context) error {
-	// Get the blocks to be played next
-	blocks, err := s.GetAmount(ctx, s.queueSize)
+	// Get the playouts to be played next
+	playouts, err := s.GetAmount(ctx, s.queueSize)
 	if err != nil {
-		return fmt.Errorf("Reload failed to get blocks: %w", err)
+		return fmt.Errorf("Reload failed to get playouts: %w", err)
 	}
-	// Empty scheduler of old blocks
+	// Empty scheduler of old playouts
 	s.sch.Clear()
-	// Add new blocks
-	for _, block := range blocks {
-		s.Schedule(ctx, block)
+	// Add new playouts
+	for _, playout := range playouts {
+		s.Schedule(ctx, playout)
 	}
 	return nil
 }
 
 // Schedule will add a schedule item to the internal jon scheduler
 // to be played out
-func (s *Scheduler) Schedule(ctx context.Context, b Block) error {
-	_, err := s.sch.StartAt(b.ScheduledStart).SetTag([]string{fmt.Sprint(b.BlockID)}).Do(s.ExecEvent, b)
+func (s *Scheduler) Schedule(ctx context.Context, b Playout) error {
+	_, err := s.sch.StartAt(b.ScheduledStart).SetTag([]string{fmt.Sprint(b.PlayoutID)}).Do(s.ExecEvent, b)
 	if err != nil {
-		return fmt.Errorf("failed to schedule event \"%d\": %w", b.BlockID, err)
+		return fmt.Errorf("failed to schedule event \"%d\": %w", b.PlayoutID, err)
 	}
 	return nil
 }
 
-// ExecEvent trigger a Block to be played out
-func (s *Scheduler) ExecEvent(ctx context.Context, i Block) error {
+// ExecEvent trigger a Playout to be played out
+func (s *Scheduler) ExecEvent(ctx context.Context, i Playout) error {
 	i.BroadcastStart = time.Now()
 	p, err := s.prog.Get(ctx, i.ProgrammeID)
 	if err != nil {
@@ -145,20 +145,20 @@ func (s *Scheduler) ExecEvent(ctx context.Context, i Block) error {
 	}
 	err = s.play.Play(ctx, c)
 	if err != nil {
-		return fmt.Errorf("failed to play block: %w", err)
+		return fmt.Errorf("failed to play playout: %w", err)
 	}
 	return nil
 }
 
 // GetRange gets a range of items from a time range
-func (s *Scheduler) GetRange(ctx context.Context, start, end time.Time) ([]Block, error) {
-	items := []Block{}
+func (s *Scheduler) GetRange(ctx context.Context, start, end time.Time) ([]Playout, error) {
+	items := []Playout{}
 	err := s.db.SelectContext(ctx, &items, `
 	
-	SELECT block_id, channel_id, programme_id, ingest_url,
+	SELECT playout_id, channel_id, programme_id, ingest_url,
 		scheduled_start, broadcast_start, scheduled_end, broadcast_end
 		
-	FROM playout.schedule_blocks
+	FROM playout.schedule_playouts
 	
 	WHERE broadcast_start BETWEEN $1 AND $2;`, start, end)
 	if err != nil {
@@ -167,33 +167,33 @@ func (s *Scheduler) GetRange(ctx context.Context, start, end time.Time) ([]Block
 	return items, nil
 }
 
-// GetAmount gets a certain amount of blocks from the current time
-func (s *Scheduler) GetAmount(ctx context.Context, amount int) ([]Block, error) {
-	blocks := []Block{}
-	err := s.db.SelectContext(ctx, &blocks, `
+// GetAmount gets a certain amount of playouts from the current time
+func (s *Scheduler) GetAmount(ctx context.Context, amount int) ([]Playout, error) {
+	playouts := []Playout{}
+	err := s.db.SelectContext(ctx, &playouts, `
 	
-	SELECT block_id, channel_id, programme_id, ingest_url,
+	SELECT playout_id, channel_id, programme_id, ingest_url,
 		scheduled_start, broadcast_start, scheduled_end, broadcast_end
 		
-	FROM playout.schedule_blocks
+	FROM playout.schedule_playouts
 	
 	WHERE broadcast_start > $1
 	LIMIT $2;`, time.Now(), amount)
 	if err != nil {
 		return nil, fmt.Errorf("failed to select get amount: %w", err)
 	}
-	return blocks, nil
+	return playouts, nil
 }
 
-// GetCurrent gets the currently playing block
-func (s *Scheduler) GetCurrent(ctx context.Context) ([]Block, error) {
-	blocks := []Block{}
-	err := s.db.SelectContext(ctx, &blocks, `
+// GetCurrent gets the currently playing playout
+func (s *Scheduler) GetCurrent(ctx context.Context) ([]Playout, error) {
+	playouts := []Playout{}
+	err := s.db.SelectContext(ctx, &playouts, `
 	
-	SELECT block_id, channel_id, programme_id, ingest_url,
+	SELECT playout_id, channel_id, programme_id, ingest_url,
 		scheduled_start, broadcast_start, scheduled_end, broadcast_end
 		
-	FROM playout.schedule_blocks
+	FROM playout.schedule_playouts
 	
 	WHERE $1 >= broadcast_start
 	AND (broadcast_end <= $1 OR broadcast_end IS NULL)
@@ -201,42 +201,42 @@ func (s *Scheduler) GetCurrent(ctx context.Context) ([]Block, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to select get range: %w", err)
 	}
-	return blocks, nil
+	return playouts, nil
 }
 
 // Delete will remove an item from the schedule from the DB and in-memory store
-func (s *Scheduler) Delete(ctx context.Context, blockID int) error {
-	err := s.deleteDB(ctx, blockID)
-	err = s.deleteCron(ctx, blockID)
+func (s *Scheduler) Delete(ctx context.Context, playoutID int) error {
+	err := s.deleteDB(ctx, playoutID)
+	err = s.deleteCron(ctx, playoutID)
 	if err != nil {
-		return fmt.Errorf("failed to delete block: %w", err)
+		return fmt.Errorf("failed to delete playout: %w", err)
 	}
 	return nil
 }
 
-func (s *Scheduler) deleteDB(ctx context.Context, blockID int) error {
+func (s *Scheduler) deleteDB(ctx context.Context, playoutID int) error {
 	res, err := s.db.ExecContext(ctx, `
 	DELETE FROM playout.schedule
-	WHERE block_id = $1`, blockID)
+	WHERE playout_id = $1`, playoutID)
 	if err != nil {
-		return fmt.Errorf("failed to delete block from database: %w", err)
+		return fmt.Errorf("failed to delete playout from database: %w", err)
 	}
 	affected, err := res.RowsAffected()
 	if err != nil {
 		return fmt.Errorf("failed to calculate rows affected: %w", err)
 	}
 	if affected == 0 {
-		return fmt.Errorf("blockID doesn't exist: %w", err)
+		return fmt.Errorf("playoutID doesn't exist: %w", err)
 	}
 	return nil
 }
 
-func (s *Scheduler) deleteCron(ctx context.Context, blockID int) error {
+func (s *Scheduler) deleteCron(ctx context.Context, playoutID int) error {
 	// TODO: if there are multiple playout instances, we can delete the DB record,
 	// but it will still exist in the other instances memory.
-	err := s.sch.RemoveJobByTag(fmt.Sprint(blockID))
+	err := s.sch.RemoveJobByTag(fmt.Sprint(playoutID))
 	if err != nil {
-		return fmt.Errorf("failed to delete block from memory: %w", err)
+		return fmt.Errorf("failed to delete playout from memory: %w", err)
 	}
 	return nil
 }

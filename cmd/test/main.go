@@ -9,7 +9,6 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"github.com/ystv/playout/channel"
-	"github.com/ystv/playout/scheduler"
 )
 
 func main() {
@@ -59,17 +58,17 @@ func main() {
 		log.Fatalf("failed to create new channel: %+v", err)
 	}
 
-	db, err := newDatabase()
-	if err != nil {
-		log.Fatalf("failed to start database: %+v", err)
-	}
+	// db, err := newDatabase()
+	// if err != nil {
+	// 	log.Fatalf("failed to start database: %+v", err)
+	// }
 
-	sch, err := scheduler.New(db, ch)
+	// sch, err := scheduler.New(db, ch)
 
-	err = sch.MainLoop(context.Background())
-	if err != nil {
-		log.Fatalf("scheduling failed: %+v", err)
-	}
+	// err = sch.MainLoop(context.Background())
+	// if err != nil {
+	// 	log.Fatalf("scheduling failed: %+v", err)
+	// }
 
 	err = ch.Start()
 	if err != nil {

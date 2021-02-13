@@ -28,7 +28,7 @@ VALUES
 'https://cdn.ystv.co.uk/prog-assets/348.jpg', 'vod');
 --
 -- Make a little schedule
-INSERT INTO playout.schedule_blocks
+INSERT INTO playout.schedule_playouts
 (channel_id, programme_id, ingest_url, ingest_type,
 scheduled_start, scheduled_end)
 VALUES

@@ -8,7 +8,7 @@ import (
 
 // Island a group of continious videos between two times
 type Island struct {
-	BlockIDs    []int     `db:"block_ids" json:"blockIDs"`
+	PlayoutIDs  []int     `db:"playout_ids" json:"playoutIDs"`
 	IslandStart time.Time `db:"island_start" json:"islandStart"`
 	IslandEnd   time.Time `db:"island_end" json:"islandEnd"`
 }
@@ -20,7 +20,7 @@ type Island struct {
 func (s *Scheduler) FindIslands(ctx context.Context) ([]Island, error) {
 	// We want to ensure that there will always be
 	// something playing, so we will check that there
-	// are blocks present.
+	// are playouts present.
 
 	// * Check DB are there empty spaces, if so indicate where and duration
 	// * Provide warnings for blank spaces but for spaces located within <24hr of playout, add content
@@ -28,7 +28,7 @@ func (s *Scheduler) FindIslands(ctx context.Context) ([]Island, error) {
 	i := []Island{}
 	err := s.db.SelectContext(ctx, &i, `
 		SELECT
-		array_agg(block_id) AS block_ids,
+		array_agg(playout_id) AS playout_ids,
 		MIN(scheduled_start) AS island_start,
 		MAX(scheduled_end) AS island_end
 		FROM
@@ -41,13 +41,13 @@ func (s *Scheduler) FindIslands(ctx context.Context) ([]Island, error) {
 			(
 				SELECT
 					ROW_NUMBER() OVER(ORDER BY scheduled_start, scheduled_end) AS RN,
-					block_id,
+					playout_id,
 					scheduled_start,
 					scheduled_end,
 					LAG(scheduled_end, 1) OVER (ORDER BY scheduled_start, scheduled_end) AS prev_item_sched_end,
-					LAG(block_id, 1) OVER (ORDER BY scheduled_start, scheduled_end) AS prev_block_id
+					LAG(playout_id, 1) OVER (ORDER BY scheduled_start, scheduled_end) AS prev_playout_id
 				FROM
-					playout.schedule_blocks
+					playout.schedule_playouts
 				WHERE channel_id = $1
 			) groups
 		) islands

@@ -1,4 +1,4 @@
-// Package programming is content either live or VOD, which can be used in multiple blocks
+// Package programming is content either live or VOD, which can be used in multiple playouts
 package programming
 
 import (

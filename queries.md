@@ -1,10 +1,10 @@
 # Potentially useful quieries
 
-For our schedule, we will want to ensure that it isn't null for any linear channels. From my understanding this can be reduced to a "gaps and islands problem". Islands being the scheduled blocks and the gaps being the dead-air.
+For our schedule, we will want to ensure that it isn't null for any linear channels. From my understanding this can be reduced to a "gaps and islands problem". Islands being the scheduled playouts and the gaps being the dead-air.
 
 These queries should work with the [test-data](test-data.sql).
 
-### List the schedule including the block before's sched_end
+### List the schedule including the playout before's sched_end
 
 ```
 SELECT
@@ -13,7 +13,7 @@ SELECT
 	scheduled_end,
 	LAG(scheduled_end, 1) OVER (ORDER BY scheduled_start, scheduled_end) AS prev_sched_item_end
 FROM
-	playout.schedule_blocks
+	playout.schedule_playouts
 WHERE channel_id = 1;
 ```
 
@@ -32,16 +32,16 @@ FROM
 		scheduled_end,
 		LAG(scheduled_end, 1) OVER (ORDER BY scheduled_start, scheduled_end) AS prev_item_sched_end
 	FROM
-		playout.schedule_blocks
+		playout.schedule_playouts
 	WHERE channel_id = 1
 ) groups
 ```
 
-### Group islands, creates array of blocks and their start / end
+### Group islands, creates array of playouts and their start / end
 
 ```
 SELECT
-	array_agg(block_id) AS block_ids,
+	array_agg(playout_id) AS playout_ids,
 	MIN(scheduled_start) AS island_start,
 	MAX(scheduled_end) AS island_end
 FROM
@@ -54,13 +54,13 @@ FROM
 	(
 		SELECT
 			ROW_NUMBER() OVER(ORDER BY scheduled_start, scheduled_end) AS RN,
-			block_id,
+			playout_id,
 			scheduled_start,
 			scheduled_end,
 			LAG(scheduled_end, 1) OVER (ORDER BY scheduled_start, scheduled_end) AS prev_item_sched_end,
-			LAG(block_id, 1) OVER (ORDER BY scheduled_start, scheduled_end) AS prev_block_id
+			LAG(playout_id, 1) OVER (ORDER BY scheduled_start, scheduled_end) AS prev_playout_id
 		FROM
-			playout.schedule_blocks
+			playout.schedule_playouts
 		WHERE channel_id = 1
 	) groups
 ) islands
@@ -74,8 +74,8 @@ ORDER BY
 
 ```
 SELECT
-	prev_block_id,
-	block_id,
+	prev_playout_id,
+	playout_id,
 	prev_item_sched_end,
 	scheduled_start
 FROM

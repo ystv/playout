@@ -11,8 +11,8 @@ import (
 func (s *Scheduler) Router() *mux.Router {
 	r := mux.NewRouter()
 	r.HandleFunc("/", home)
-	r.HandleFunc("/block", s.newBlock).Methods("POST")
-	r.HandleFunc("/block", s.updateBlock).Methods("PUT")
+	r.HandleFunc("/playout", s.newPlayout).Methods("POST")
+	r.HandleFunc("/playout", s.updatePlayout).Methods("PUT")
 	return r
 }
 
@@ -20,22 +20,22 @@ func home(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("scheduler"))
 }
 
-func (s *Scheduler) newBlock(w http.ResponseWriter, r *http.Request) {
-	block := NewBlock{}
-	err := json.NewDecoder(r.Body).Decode(&block)
+func (s *Scheduler) newPlayout(w http.ResponseWriter, r *http.Request) {
+	playout := NewPlayout{}
+	err := json.NewDecoder(r.Body).Decode(&playout)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	blockID, err := s.NewBlock(r.Context(), block)
+	playoutID, err := s.NewPlayout(r.Context(), playout)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	req := struct {
-		BlockID int `json:"blockID"`
+		PlayoutID int `json:"playoutID"`
 	}{
-		BlockID: blockID,
+		PlayoutID: playoutID,
 	}
 
 	err = json.NewEncoder(w).Encode(req)
@@ -45,14 +45,14 @@ func (s *Scheduler) newBlock(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 }
 
-func (s *Scheduler) updateBlock(w http.ResponseWriter, r *http.Request) {
-	block := Block{}
-	err := json.NewDecoder(r.Body).Decode(&block)
+func (s *Scheduler) updatePlayout(w http.ResponseWriter, r *http.Request) {
+	playout := Playout{}
+	err := json.NewDecoder(r.Body).Decode(&playout)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	err = s.UpdateBlock(r.Context(), block)
+	err = s.UpdatePlayout(r.Context(), playout)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
