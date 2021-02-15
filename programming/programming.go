@@ -28,7 +28,7 @@ type (
 	// If the length of Videos is 0. We presume that it is live
 	// content, and a player won't be made.
 	Programme struct {
-		ID          int     `db:"programme_id" json:"id"`
+		ProgrammeID int     `db:"programme_id" json:"id"`
 		Title       string  `db:"title" json:"title"`
 		Description string  `db:"description" json:"description"`
 		Thumbnail   string  `db:"thumbnail" json:"thumbnail"`
