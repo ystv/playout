@@ -3,22 +3,21 @@
 package channel
 
 import (
-	"bytes"
-	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net/http"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/ystv/playout/piper"
+	"github.com/ystv/playout/scheduler"
 )
 
 type (
 	// Channel represents a video feed
 	Channel struct {
+		// Core
 		ID          int
 		ShortName   string // URL name
 		ChannelType string // event / linear
@@ -27,28 +26,35 @@ type (
 		SlateURL    string   // Fallback video
 		Archive     bool     // Add to VOD after
 		Outputs     []Output // Configured outputs
-		CreatedAt   time.Time
-		Status      string // The state of channel ready / running / starting / stopping / pending
+		Status      string   // The state of channel ready / running / starting / stopping / pending
 
 		// Frontend
-		Name        string
+		Name        string // Display name
 		Description string
 		Thumbnail   string
+		CreatedAt   time.Time
 
-		conf *Config
+		// Dependencies
+		sch   *scheduler.Scheduler
+		piper *piper.Piper
+		conf  *Config
 	}
 
 	// NewChannelStruct represnets the required channel config
 	NewChannelStruct struct {
-		ShortName   string
-		Name        string
-		Description string
-		ChannelType string // event / linear
-		IngestURL   string
-		IngestType  string // RTSP / RTMP / HLS
-		SlateURL    string // fallback video
-		Archive     bool   // Add to VOD after
-		Outputs     []Output
+		ShortName    string
+		Name         string
+		Description  string
+		ChannelType  string // event / linear
+		IngestURL    string
+		IngestType   string // RTSP / RTMP / HLS
+		SlateURL     string // fallback video
+		Visible      string // public / internal / private. TOOD: Will it stay?
+		Archive      bool   // Add to VOD after
+		DVR          bool   // Allow rewind on outputs, is a default value
+		HasScheduler bool
+		HasPiper     bool
+		Outputs      []Output
 	}
 
 	// Outputs
@@ -66,7 +72,7 @@ type (
 
 	// Renditions
 
-	// Rendition represents a rendition of the source video
+	// Rendition represents a generic rendition of the source video
 	Rendition struct {
 		Width   int
 		Height  int
@@ -74,6 +80,8 @@ type (
 		FPS     int
 		Codec   string // h264 / h265
 	}
+
+	// We might have some custom renditions for the fancier outputs
 )
 
 // Start the channel
@@ -207,34 +215,4 @@ func (ch *Channel) Stop() error {
 // Used by http api to allow VT to check if the stream still needs to be up
 func (ch *Channel) Stat() (string, error) {
 	return ch.Status, nil
-}
-
-// Task represents a task in VT
-type Task struct {
-	ID      string `json:"id"`      // Task UUID
-	Args    string `json:"args"`    // Global arguments
-	SrcArgs string `json:"srcArgs"` // Input file options
-	SrcURL  string `json:"srcURL"`  // Location of source file on CDN
-	DstArgs string `json:"dstArgs"` // Output file options
-	DstURL  string `json:"dstURL"`  // Destination of finished encode on CDN
-}
-
-// NewStream will create a new stream
-func (ch *Channel) NewStream(ctx context.Context, t Task) error {
-	postBody, err := json.Marshal(t)
-	if err != nil {
-		return err
-	}
-	reqBody := bytes.NewBuffer(postBody)
-	res, err := http.Post(ch.conf.VTEndpoint+"/new_live", "application/json", reqBody)
-	if err != nil {
-		return err
-	}
-	defer res.Body.Close()
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return err
-	}
-	log.Printf("%s", body)
-	return nil
 }

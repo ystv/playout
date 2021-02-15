@@ -16,7 +16,7 @@ type (
 		Composition Composition
 		Outputs     []Output
 	}
-	New struct {
+	Config struct {
 		Endpoint string
 		Width    int
 		Height   int
@@ -48,18 +48,17 @@ type (
 	NewInput struct {
 		Input
 	}
-)
 
-type (
 	// Composition is the video that will be outputted
 	Composition interface {
 		SetSource(sourceID int) error
 	}
-	// Output handles providing a video output to a defined URL
-	IOutput interface {
+	// Outputer handles providing a video output to a defined URL
+	Outputer interface {
 		NewOutput(url string) error
 		DeleteOutput(outputID string) error
 	}
+	// Output is a piper output
 	Output struct {
 		URL     string `json:"url"`
 		State   string `json:"state"`

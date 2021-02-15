@@ -54,7 +54,7 @@ func (s *Scheduler) FindIslands(ctx context.Context) ([]Island, error) {
 		GROUP BY
 			island_id
 		ORDER BY
-			island_start;`, s.ch.ID)
+			island_start;`, s.channel)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find islands: %w", err)
 	}

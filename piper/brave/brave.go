@@ -1,3 +1,5 @@
+// Package brave is an implementation of Piper in brave.
+// TODO: Remove piper as dependency and make piper adapt to brave in it's own package
 package brave
 
 import (
@@ -12,6 +14,7 @@ import (
 
 var _ piper.Piper = &Brave{}
 
+// Brave piper instance
 type Brave struct {
 	c        http.Client
 	endpoint string
@@ -39,7 +42,7 @@ type (
 		State           string  `json:"state"`
 		ConnectionSpeed int     `json:"connection_speed"`
 		BufferSize      int     `json:"buffer_size"`
-		BufferDuration  int     `json:"buffer_duration`
+		BufferDuration  int     `json:"buffer_duration"`
 		Width           int     `json:"width"`
 		Height          int     `json:"height"`
 	}
@@ -53,7 +56,7 @@ type (
 	}
 	// Output represents a Brave output object
 	Output struct {
-		ID       int    `json:id"`
+		ID       int    `json:"id"`
 		UID      string `json:"uid"`
 		Source   string `json:"source"`
 		URI      string `json:"uri"`
@@ -89,7 +92,7 @@ type (
 // New creates a new brave object
 //
 // The URL is the endpoint of the brave instance
-func New(ctx context.Context, p piper.New) (*Brave, error) {
+func New(ctx context.Context, p piper.Config) (*Brave, error) {
 	b := &Brave{
 		c:        http.Client{},
 		endpoint: p.Endpoint,

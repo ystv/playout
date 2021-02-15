@@ -5,12 +5,16 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+
+	"github.com/jmoiron/sqlx"
+	"github.com/ystv/playout/scheduler"
 )
 
 type (
 	// MCR manages a group of channels
 	MCR struct {
-		conf     Config
+		db       *sqlx.DB
+		conf     *Config
 		channels map[string]*Channel
 	}
 	// Config to specify available endpoints
@@ -29,7 +33,7 @@ type (
 // effictively manages a group of channels
 func NewMCR() *MCR {
 	mcr := &MCR{
-		conf: Config{
+		conf: &Config{
 			VTEndpoint: "http://localhost:7071",
 			Endpoints: []Endpoint{
 				{
@@ -58,7 +62,7 @@ func (mcr *MCR) GetChannel(ctx context.Context, shortName string) (*Channel, err
 
 // NewChannel creates a new channel to playout
 func (mcr *MCR) NewChannel(ctx context.Context, newCh NewChannelStruct) (*Channel, error) {
-	channel := &Channel{
+	ch := &Channel{
 		ShortName:   newCh.ShortName,
 		Name:        newCh.Name,
 		Description: newCh.Description,
@@ -69,28 +73,65 @@ func (mcr *MCR) NewChannel(ctx context.Context, newCh NewChannelStruct) (*Channe
 		Outputs:     newCh.Outputs,
 		Archive:     newCh.Archive,
 	}
-	channel.Status = "pending"
+	ch.Status = "pending"
 
 	// Default values
-	if channel.Name == "" {
-		channel.Name = "A random livestream"
+	if ch.Name == "" {
+		ch.Name = "A random livestream"
 	}
 
 	for {
 		// Generate a random short-name if one wasn't provided
-		if channel.ShortName == "" {
-			channel.ShortName = randString()
+		if ch.ShortName == "" {
+			ch.ShortName = randString()
 		}
-		_, exists := mcr.channels[channel.ShortName]
+		_, exists := mcr.channels[ch.ShortName]
 		if !exists {
 			break
 		}
 	}
 
-	mcr.channels[channel.ShortName] = channel
-	// TODO: Reflect creation in DB
+	mcr.channels[ch.ShortName] = ch
 
-	return channel, nil
+	channelID := 0
+	err := mcr.db.GetContext(ctx, &channelID, `
+		INSERT INTO playout.channel(
+			short_name,
+			name,
+			description,
+			type,
+			ingest_url,
+			ingest_type,
+			slate_url,
+			visibility,
+			archive,
+			dvr)
+		RETURNING channel_id;`,
+		ch.ShortName, ch.Name, ch.Description, ch.ChannelType,
+		ch.IngestURL, ch.IngestURL, ch.SlateURL, newCh.Visible,
+		ch.Archive, newCh.DVR)
+	if err != nil {
+		return nil, fmt.Errorf("failed to insert channel to DB: %w", err)
+	}
+
+	if newCh.HasScheduler {
+		sch, err := scheduler.New(mcr.db, channelID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to start scheduler: %w", err)
+		}
+		ch.sch = sch
+	}
+
+	// TODO: Will uncomment when dependency cycle is fixed
+	// if newCh.HasPiper {
+	// 	piper, err := piper.New()
+	// 	if err != nil {
+	// 		return nil, fmt.Errorf("failed to start piper: %w", err)
+	// 	}
+	// 	ch.piper = piper
+	// }
+
+	return ch, nil
 }
 
 // DeleteChannel removes a channel from playout
