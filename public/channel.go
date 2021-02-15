@@ -11,12 +11,12 @@ type (
 	//
 	// Linear or event video stream
 	Channel struct {
-		ShortName   string    `json:"shortName"`
-		Name        string    `json:"name"`
-		Description string    `json:"description"`
-		Thumbnail   string    `json:"thumbnail"`
-		OutputURL   string    `json:"outputURL"`
-		Schedule    []Playout `json:"schedule"`
+		ShortName    string    `json:"shortName"`
+		Name         string    `json:"name"`
+		Description  string    `json:"description"`
+		Thumbnail    string    `json:"thumbnail"`
+		Destinations []string  `json:"destinations"`
+		Schedule     []Playout `json:"schedule"`
 	}
 	// Playout public representation
 	//
@@ -57,10 +57,17 @@ func (p *Publicer) GetChannel(ctx context.Context, shortName string) (*Channel, 
 		return nil, fmt.Errorf("failed to get public channel: %w", err)
 	}
 
+	dests := []string{}
+	for _, output := range ch.Outputs {
+		dests = append(dests, output.Destination)
+	}
+
 	chPublic := &Channel{
-		ShortName:   ch.ShortName,
-		Name:        ch.Name,
-		Description: ch.Description,
+		ShortName:    ch.ShortName,
+		Name:         ch.Name,
+		Description:  ch.Description,
+		Thumbnail:    ch.Thumbnail,
+		Destinations: dests,
 	}
 
 	return chPublic, nil

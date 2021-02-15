@@ -97,7 +97,6 @@ CREATE TABLE playout.channel(
     ingest_url text NOT NULL,
     ingest_type text NOT NULL,
     slate_url text NOT NULL,
-    -- playback_url text NOT NULL,
     visibility text NOT NULL,
     -- inheritable default params for schedule
     archive bool NOT NULL DEFAULT TRUE,

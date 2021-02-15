@@ -21,8 +21,6 @@ type (
 	Channel struct {
 		ID          int
 		ShortName   string // URL name
-		Name        string
-		Description string
 		ChannelType string // event / linear
 		IngestURL   string
 		IngestType  string   // RTP / RTMP / HLS
@@ -31,6 +29,11 @@ type (
 		Outputs     []Output // Configured outputs
 		CreatedAt   time.Time
 		Status      string // The state of channel ready / running / starting / stopping / pending
+
+		// Frontend
+		Name        string
+		Description string
+		Thumbnail   string
 
 		conf *Config
 	}
@@ -47,10 +50,9 @@ type (
 		Archive     bool   // Add to VOD after
 		Outputs     []Output
 	}
-)
 
-// Outputs
-type (
+	// Outputs
+
 	// Output is an video output
 	Output struct {
 		Name        string
@@ -61,10 +63,9 @@ type (
 		Renditions  []Rendition
 	}
 	// Output types
-)
 
-// Renditions
-type (
+	// Renditions
+
 	// Rendition represents a rendition of the source video
 	Rendition struct {
 		Width   int
