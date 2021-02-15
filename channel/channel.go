@@ -19,7 +19,8 @@ import (
 type (
 	// Channel represents a video feed
 	Channel struct {
-		ID          string
+		ID          int
+		ShortName   string // URL name
 		Name        string
 		Description string
 		ChannelType string // event / linear
@@ -36,7 +37,7 @@ type (
 
 	// NewChannelStruct represnets the required channel config
 	NewChannelStruct struct {
-		ID          string
+		ShortName   string
 		Name        string
 		Description string
 		ChannelType string // event / linear

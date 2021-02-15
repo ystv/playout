@@ -48,8 +48,8 @@ func NewMCR() *MCR {
 }
 
 // GetChannel retrieves a channel from playout
-func (mcr *MCR) GetChannel(ctx context.Context, channelID string) (*Channel, error) {
-	ch, ok := mcr.channels[channelID]
+func (mcr *MCR) GetChannel(ctx context.Context, shortName string) (*Channel, error) {
+	ch, ok := mcr.channels[shortName]
 	if !ok {
 		return nil, errors.New("channel doesn't exist")
 	}
@@ -59,6 +59,7 @@ func (mcr *MCR) GetChannel(ctx context.Context, channelID string) (*Channel, err
 // NewChannel creates a new channel to playout
 func (mcr *MCR) NewChannel(ctx context.Context, newCh NewChannelStruct) (*Channel, error) {
 	channel := &Channel{
+		ShortName:   newCh.ShortName,
 		Name:        newCh.Name,
 		Description: newCh.Description,
 		ChannelType: newCh.ChannelType,
@@ -70,27 +71,36 @@ func (mcr *MCR) NewChannel(ctx context.Context, newCh NewChannelStruct) (*Channe
 	}
 	channel.Status = "pending"
 
+	// Default values
+	if channel.Name == "" {
+		channel.Name = "A random livestream"
+	}
+
 	for {
-		channel.ID = randString()
-		_, exists := mcr.channels[channel.ID]
+		// Generate a random short-name if one wasn't provided
+		if channel.ShortName == "" {
+			channel.ShortName = randString()
+		}
+		_, exists := mcr.channels[channel.ShortName]
 		if !exists {
 			break
 		}
 	}
 
-	mcr.channels[channel.ID] = channel
+	mcr.channels[channel.ShortName] = channel
+	// TODO: Reflect creation in DB
 
 	return channel, nil
 }
 
 // DeleteChannel removes a channel from playout
-func (mcr *MCR) DeleteChannel(channelID string) error {
-	if _, ok := mcr.channels[channelID]; ok {
-		err := mcr.channels[channelID].Stop()
+func (mcr *MCR) DeleteChannel(shortName string) error {
+	if _, ok := mcr.channels[shortName]; ok {
+		err := mcr.channels[shortName].Stop()
 		if err != nil {
 			return fmt.Errorf("failed to delete channel: %w", err)
 		}
-		delete(mcr.channels, channelID)
+		delete(mcr.channels, shortName)
 	}
 	return nil
 }
