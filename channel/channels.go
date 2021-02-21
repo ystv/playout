@@ -7,6 +7,7 @@ import (
 	"math/rand"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/ystv/playout/piper"
 	"github.com/ystv/playout/scheduler"
 )
 
@@ -122,14 +123,18 @@ func (mcr *MCR) NewChannel(ctx context.Context, newCh NewChannelStruct) (*Channe
 		ch.sch = sch
 	}
 
-	// TODO: Will uncomment when dependency cycle is fixed
-	// if newCh.HasPiper {
-	// 	piper, err := piper.New()
-	// 	if err != nil {
-	// 		return nil, fmt.Errorf("failed to start piper: %w", err)
-	// 	}
-	// 	ch.piper = piper
-	// }
+	if newCh.HasPiper {
+		piper, err := piper.New(ctx, piper.Config{
+			Endpoint: "",
+			Width:    1920,
+			Height:   1080,
+			FPS:      50,
+		}, "brave")
+		if err != nil {
+			return nil, fmt.Errorf("failed to start piper: %w", err)
+		}
+		ch.piper = piper
+	}
 
 	return ch, nil
 }

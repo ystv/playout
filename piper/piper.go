@@ -17,14 +17,14 @@ var (
 )
 
 type (
-	// Piper is a buffer which can swap video inputs without
+	// IPiper is a buffer which can swap video inputs without
 	// dropping it's output feed with fallible sources
-	Piper interface {
+	IPiper interface {
 		Restart() error
-		GetState() (*State, error)
+		GetState() (*Piper, error)
 	}
 	// State is the internal representation of a piper
-	State struct {
+	Piper struct {
 		Inputs      []Input
 		Composition Composition
 		Outputs     []Output
@@ -105,8 +105,8 @@ type (
 )
 
 // New creates a new Piper instance
-func New(ctx context.Context, conf Config, mixer string) (*State, error) {
-	s := State{}
+func New(ctx context.Context, conf Config, mixer string) (*Piper, error) {
+	s := &Piper{}
 	var err error
 	switch mixer {
 	case "brave":
@@ -119,24 +119,27 @@ func New(ctx context.Context, conf Config, mixer string) (*State, error) {
 		return nil, ErrUnknownMixer
 	}
 	s.mixer = mixer
-	s.UpdateState(ctx)
-	return nil, nil
+	err = s.UpdateState(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update state: %w", err)
+	}
+	return s, nil
 }
 
 // UpdateState will update the state to reflect the chosen mixer
-func (s *State) UpdateState(ctx context.Context) error {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-	switch s.mixer {
+func (p *Piper) UpdateState(ctx context.Context) error {
+	p.lock.Lock()
+	defer p.lock.Unlock()
+	switch p.mixer {
 	case "brave":
-		b, err := s.brave.GetState()
+		b, err := p.brave.GetState()
 		if err != nil {
 			return fmt.Errorf("failed to get brave state: %w", err)
 		}
 		// Brave inputs to Piper inputs
-		s.Inputs = []Input{}
+		p.Inputs = []Input{}
 		for _, input := range b.Inputs {
-			s.Inputs = append(s.Inputs, Input{
+			p.Inputs = append(p.Inputs, Input{
 				InputID: string(rune(input.ID)),
 				URL:     input.URI,
 				State:   input.State,
@@ -146,9 +149,9 @@ func (s *State) UpdateState(ctx context.Context) error {
 			})
 		}
 		// Brave Outputs to Piper outputs
-		s.Outputs = []Output{}
+		p.Outputs = []Output{}
 		for _, output := range b.Outputs {
-			s.Outputs = append(s.Outputs, Output{
+			p.Outputs = append(p.Outputs, Output{
 				OutputID: string(rune(output.ID)),
 				URL:      output.URI,
 				State:    output.State,
@@ -159,17 +162,17 @@ func (s *State) UpdateState(ctx context.Context) error {
 				Codec:    "unknown",
 			})
 		}
-		s.Composition = Composition{}
+		p.Composition = Composition{}
 		for _, mixer := range b.Mixers {
 			if mixer.ID == b.MainMixID {
-				s.Composition = Composition{
+				p.Composition = Composition{
 					CompositionID: string(rune(mixer.ID)),
 					State:         mixer.State,
 					Width:         mixer.Height,
 					Height:        mixer.Height,
 				}
 				for _, source := range mixer.Sources {
-					s.Composition.Sources = append(s.Composition.Sources, source.ID)
+					p.Composition.Sources = append(p.Composition.Sources, source.ID)
 				}
 			}
 		}
