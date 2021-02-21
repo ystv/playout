@@ -7,27 +7,25 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
-
-	"github.com/ystv/playout/piper"
 )
-
-var _ piper.Piper = &Brave{}
 
 // Brave piper instance
 type Brave struct {
 	c        http.Client
 	endpoint string
-	state    State
+	State    *State
 }
 
 type (
 	// State represents an adaptation of the Brave state
 	State struct {
-		Inputs   []Input   `json:"inputs"`
-		Overlays []Overlay `json:"overlays"`
-		Outputs  []Output  `json:"outputs"`
-		Mixers   []Mixer   `json:"mixer"`
+		MainMixID int
+		Inputs    []Input   `json:"inputs"`
+		Overlays  []Overlay `json:"overlays"`
+		Outputs   []Output  `json:"outputs"`
+		Mixers    []Mixer   `json:"mixer"`
 	}
 	// Input represents a Brave input object.
 	Input struct {
@@ -92,10 +90,10 @@ type (
 // New creates a new brave object
 //
 // The URL is the endpoint of the brave instance
-func New(ctx context.Context, p piper.Config) (*Brave, error) {
+func New(ctx context.Context, endpoint string, width, height int) (*Brave, error) {
 	b := &Brave{
 		c:        http.Client{},
-		endpoint: p.Endpoint,
+		endpoint: endpoint,
 	}
 	res, err := b.c.Get(b.endpoint + "/api/all")
 	if err != nil {
@@ -104,8 +102,8 @@ func New(ctx context.Context, p piper.Config) (*Brave, error) {
 	defer res.Body.Close()
 
 	reqBody := Mixer{
-		Height: p.Height,
-		Width:  p.Width,
+		Height: height,
+		Width:  width,
 	}
 	reqJSON, err := json.Marshal(reqBody)
 	if err != nil {
@@ -143,22 +141,19 @@ func (b *Brave) Restart() error {
 	return nil
 }
 
-func (b *Brave) GetState() (*piper.State, error) {
-	p := piper.State{}
-	for _, bInput := range b.state.Inputs {
-		p.Inputs = append(p.Inputs, piper.Input{
-			URL:    bInput.URI, // TODO: Look into this
-			State:  bInput.State,
-			Type:   bInput.Type,
-			Width:  bInput.Width,
-			Height: bInput.Height,
-		})
+// GetState updates the internal state with what Brave is currently
+func (b *Brave) GetState() (*State, error) {
+	res, err := b.c.Get(b.endpoint + "/api/all")
+	if err != nil {
+		return nil, fmt.Errorf("failed to request state: %w", err)
 	}
-
-	for _, bOutput := range b.state.Outputs {
-		p.Outputs = append(p.Outputs, piper.Output{
-			URL: bOutput.URI,
-		})
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
-	return nil, nil
+	err = json.Unmarshal(body, &b.State)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal response: %w", err)
+	}
+	return b.State, nil
 }
