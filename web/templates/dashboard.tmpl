@@ -3,10 +3,30 @@ MCR: dashboard
 {{end}}
 
 {{define "content"}}
-<div class="dashboard">
-    <h1>Dashboard!</h1>
-    {{range .Channels}}
-        <p>{{.}}</p>
-    {{end}}
-</div>
+<section class="section">
+    <div class="container is-fluid">
+        <div class="columns is-multiline">
+            {{range .Channels}}
+                <div class="column is-6">
+                    <div class="box">
+                        <h4 class="title">{{.Name}}</h4>
+                        <div class="icon-text">
+                            <span class="icon has-text-success">
+                                <i class="fas fa-play"></i>
+                            </span>
+                            <span><h4 class="subtitle">{{.Status}}</h4></span>
+                        </div>
+
+                        <div class="block">
+                            Current: <a>Something</a>
+                            Up-next: <a>Gamers</a>
+                        </div>
+
+                        <a class="button" href="/playout/ch/{{.ShortName}}">Control Room</a>
+                    </div>
+                </div>
+            {{end}}
+        </div>
+    </div>
+</section>
 {{end}}

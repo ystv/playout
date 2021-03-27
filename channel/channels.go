@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"math/rand"
 
 	"github.com/jmoiron/sqlx"
@@ -32,8 +33,9 @@ type (
 
 // NewMCR creates a new "Master Control Room"
 // effictively manages a group of channels
-func NewMCR() *MCR {
+func NewMCR(db *sqlx.DB) (*MCR, error) {
 	mcr := &MCR{
+		db: db,
 		conf: &Config{
 			VTEndpoint: "http://localhost:7071",
 			Endpoints: []Endpoint{
@@ -49,7 +51,31 @@ func NewMCR() *MCR {
 		},
 		channels: make(map[string]*Channel),
 	}
-	return mcr
+	err := mcr.Reload(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("failed to reload mcr: %w", err)
+	}
+	return mcr, nil
+}
+
+func (mcr *MCR) Reload(ctx context.Context) error {
+	chs := []Channel{}
+	err := mcr.db.SelectContext(ctx, &chs,
+		`SELECT short_name, name, description, type, ingest_url, ingest_type,
+		slate_url, visibility, archive, dvr
+		FROM playout.channel;`)
+	if err != nil {
+		return fmt.Errorf("failed to get channels from db: %w", err)
+	}
+	for _, ch := range chs {
+		ch.Status = "running"
+		err = mcr.newChannel(ctx, ch, false)
+		if err != nil {
+			return fmt.Errorf("failed to add channel: %w", err)
+		}
+	}
+	log.Printf("loaded %d channels", len(chs))
+	return nil
 }
 
 // GetChannel retrieves a channel from playout
@@ -65,14 +91,78 @@ func (mcr *MCR) GetChannels() (map[string]*Channel, error) {
 	return mcr.channels, nil
 }
 
+// newChannel adds the channel to memory and adds the helper services
+func (mcr *MCR) newChannel(ctx context.Context, ch Channel, updateDB bool) error {
+	mcr.channels[ch.ShortName] = &ch
+
+	if updateDB {
+		// TODO handle existing
+		err := mcr.addChannelToDB(ctx, ch)
+		if err != nil {
+			return fmt.Errorf("failed to add channel to DB: %w", err)
+		}
+	}
+
+	if ch.hasScheduler {
+		sch, err := scheduler.New(mcr.db, ch.ID)
+		if err != nil {
+			return fmt.Errorf("failed to start scheduler: %w", err)
+		}
+		ch.sch = sch
+	}
+
+	if ch.hasPiper {
+		piper, err := piper.New(ctx, piper.Config{
+			Endpoint: "",
+			Width:    1920,
+			Height:   1080,
+			FPS:      50,
+		}, "brave")
+		if err != nil {
+			return fmt.Errorf("failed to start piper: %w", err)
+		}
+		ch.piper = piper
+	}
+	return nil
+}
+
+// addChannelToDB will add a channel
+//
+// Will update channel ID to the new one
+func (mcr *MCR) addChannelToDB(ctx context.Context, ch Channel) error {
+	channelID := 0
+	err := mcr.db.GetContext(ctx, &channelID, `
+		INSERT INTO playout.channel(
+			channel_id,
+			short_name,
+			name,
+			description,
+			type,
+			ingest_url,
+			ingest_type,
+			slate_url,
+			visibility,
+			archive,
+			dvr)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		RETURNING channel_id;`,
+		ch.ID, ch.ShortName, ch.Name, ch.Description, ch.ChannelType,
+		ch.IngestURL, ch.IngestURL, ch.SlateURL, ch.Visibilty,
+		ch.Archive, ch.DVR)
+	if err != nil {
+		return fmt.Errorf("failed to insert channel to DB: %w", err)
+	}
+	ch.ID = channelID
+	return nil
+}
+
 // NewChannel creates a new channel to playout
 func (mcr *MCR) NewChannel(ctx context.Context, newCh NewChannelStruct) (*Channel, error) {
-	ch := &Channel{
+	ch := Channel{
 		ShortName:   newCh.ShortName,
 		Name:        newCh.Name,
 		Description: newCh.Description,
 		ChannelType: newCh.ChannelType,
-		IngestURL:   newCh.IngestURL,
 		IngestType:  newCh.IngestType,
 		SlateURL:    newCh.SlateURL,
 		Outputs:     newCh.Outputs,
@@ -96,51 +186,12 @@ func (mcr *MCR) NewChannel(ctx context.Context, newCh NewChannelStruct) (*Channe
 		}
 	}
 
-	mcr.channels[ch.ShortName] = ch
-
-	channelID := 0
-	err := mcr.db.GetContext(ctx, &channelID, `
-		INSERT INTO playout.channel(
-			short_name,
-			name,
-			description,
-			type,
-			ingest_url,
-			ingest_type,
-			slate_url,
-			visibility,
-			archive,
-			dvr)
-		RETURNING channel_id;`,
-		ch.ShortName, ch.Name, ch.Description, ch.ChannelType,
-		ch.IngestURL, ch.IngestURL, ch.SlateURL, newCh.Visible,
-		ch.Archive, newCh.DVR)
+	err := mcr.newChannel(ctx, ch, true)
 	if err != nil {
-		return nil, fmt.Errorf("failed to insert channel to DB: %w", err)
+		return nil, fmt.Errorf("failed to add channel to memory: %w", err)
 	}
 
-	if newCh.HasScheduler {
-		sch, err := scheduler.New(mcr.db, channelID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to start scheduler: %w", err)
-		}
-		ch.sch = sch
-	}
-
-	if newCh.HasPiper {
-		piper, err := piper.New(ctx, piper.Config{
-			Endpoint: "",
-			Width:    1920,
-			Height:   1080,
-			FPS:      50,
-		}, "brave")
-		if err != nil {
-			return nil, fmt.Errorf("failed to start piper: %w", err)
-		}
-		ch.piper = piper
-	}
-
-	return ch, nil
+	return &ch, nil
 }
 
 // DeleteChannel removes a channel from playout

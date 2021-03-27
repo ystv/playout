@@ -12,8 +12,10 @@ var tpls embed.FS
 
 type (
 	Templater struct {
-		dashboard *template.Template
-		funcs     template.FuncMap
+		dashboard  *template.Template
+		channel    *template.Template
+		newChannel *template.Template
+		funcs      template.FuncMap
 	}
 	Channel struct {
 		ShortName   string // URL name
@@ -28,6 +30,9 @@ type (
 		Thumbnail   string
 		CreatedAt   time.Time
 	}
+	PlainParams struct {
+		Base BaseParams
+	}
 	BaseParams struct {
 		UserName   string
 		SystemTime time.Time
@@ -35,6 +40,10 @@ type (
 	DashboardParams struct {
 		Base     BaseParams
 		Channels []Channel
+	}
+	ChannelParams struct {
+		Base BaseParams
+		Ch   Channel
 	}
 )
 
@@ -53,10 +62,20 @@ func parse(file string) *template.Template {
 
 func New() *Templater {
 	return &Templater{
-		dashboard: parse("dashboard.tmpl"),
+		dashboard:  parse("dashboard.tmpl"),
+		channel:    parse("channel.tmpl"),
+		newChannel: parse("new-channel.tmpl"),
 	}
 }
 
 func (t *Templater) Dashboard(w io.Writer, p DashboardParams) error {
 	return t.dashboard.Execute(w, p)
+}
+
+func (t *Templater) Channel(w io.Writer, p ChannelParams) error {
+	return t.channel.Execute(w, p)
+}
+
+func (t *Templater) NewChannel(w io.Writer, p PlainParams) error {
+	return t.newChannel.Execute(w, p)
 }

@@ -2,17 +2,30 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 
+	// PostgreSQL driver
+	_ "github.com/lib/pq"
+
 	"github.com/gorilla/mux"
+	"github.com/jmoiron/sqlx"
 	"github.com/ystv/playout/channel"
 	"github.com/ystv/playout/web"
 )
 
 func main() {
-	mcr := channel.NewMCR()
+	db, err := newDatabase()
+	if err != nil {
+		log.Fatalf("failed to start db: %+v", err)
+	}
+	mcr, err := channel.NewMCR(db)
+	if err != nil {
+		log.Fatalf("failed to create mcr: %+v", err)
+	}
 	r := mux.NewRouter()
 	r.HandleFunc("/", handleIndex).Methods("GET")
 	mount(r, "/playout", web.New(mcr).Router())
@@ -33,4 +46,25 @@ func mount(r *mux.Router, path string, handler http.Handler) {
 			handler,
 		),
 	)
+}
+
+// newDatabase creates a new database connection
+func newDatabase() (*sqlx.DB, error) {
+	username := os.Getenv("PLAYOUT_DB_USER")
+	password := os.Getenv("PLAYOUT_DB_PASS")
+	dbName := os.Getenv("PLAYOUT_DB_NAME")
+	dbHost := os.Getenv("PLAYOUT_DB_HOST")
+	dbPort := os.Getenv("PLAYOUT_DB_PORT")
+
+	dbURI := fmt.Sprintf("dbname=%s host=%s user=%s password=%s port=%s sslmode=disable", dbName, dbHost, username, password, dbPort) // Build connection string
+
+	db, err := sqlx.Open("postgres", dbURI)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to DB: %w", err)
+	}
+	err = db.Ping()
+	if err != nil {
+		return nil, fmt.Errorf("failed to ping db: %w", err)
+	}
+	return db, nil
 }

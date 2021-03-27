@@ -1,13 +1,13 @@
 -- Create two generic channels of the two types
 INSERT INTO playout.channel
-(name, description, type, ingest_url, ingest_type, 
+(short_name, name, description, type, ingest_url, ingest_type, 
 slate_url, visibility, archive, dvr)
 VALUES
-('The TV Channel', 'Top-end content', 'linear',
+('tv', 'The TV Channel', 'Top-end content', 'linear',
 'rtp://media-ingest.ystv.co.uk/sky1', 'rtp',
 'https://cdn.ystv.co.uk/channel-assets/holding.mp4',
 'public', true, true),
-('MusicTV', 'A pop-up music channel!', 'event',
+('music', 'MusicTV', 'A pop-up music channel!', 'event',
 'rtmp://media-ingest.ystv.co.uk/mtv', 'rtmp',
 'https://cdn.ystv.co.uk/channel-assets/holding.mp4',
 'public', true, false);

@@ -66,5 +66,9 @@ func newDatabase() (*sqlx.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to DB: %w", err)
 	}
+	err = db.Ping()
+	if err != nil {
+		return nil, fmt.Errorf("failed to ping db: %w", err)
+	}
 	return db, nil
 }

@@ -1,0 +1,91 @@
+{{define "title"}}
+MCR: new channel
+{{end}}
+
+{{define "content"}}
+<div class="container">
+    <h1 class="title">New Channel</h1>
+    <form method="post">
+    <fieldset>
+    <div class="field">
+    <label class="label" for="name">Name</label>
+    <div class="control">
+        <input id="name" name="name" type="text" class="input " required="">
+        
+    </div>
+    </div>
+
+    <div class="field">
+    <label class="label" for="short-name">Short Name</label>
+    <div class="control">
+        <input id="short-name" name="short-name" type="text" class="input " required="">
+        <p class="help">Used in URLs and when a short name is more convenient</p>
+    </div>
+    </div>
+
+    <div class="field">
+    <label class="label" for="description">Description</label>
+    <div class="control">                     
+        <textarea class="textarea" id="description" name="description"></textarea>
+    </div>
+    </div>
+
+    <div class="field">
+    <label class="label" for="type">Type</label>
+    <div class="control">
+        <div class="select">
+            <select id="type" name="type" class="">
+            <option>Linear</option>
+            <option>Event</option>
+            </select>
+        </div>
+    </div>
+    </div>
+
+    <div class="field">
+    <label class="label" for="ingest-type">Ingest Type</label>
+    <div class="control">
+        <div class="select">
+            <select id="ingest-type" name="ingest-type" class="">
+            <option>RTMP (PULL)</option>
+            <option>RTMP (PUSH)</option>
+            <option>HLS (PUSH)</option>
+            </select>
+        </div>
+    </div>
+    </div>
+
+    <div class="field">
+    <label class="label" for="">Options</label>
+    <div class="control">
+        <label class="checkbox" for="options">
+        <input type="checkbox" name="options" id="dvr" value="DVR">
+        DVR
+        </label>
+        <label class="checkbox" for="archive">
+        <input type="checkbox" name="options" id="archive" value="Archive">
+        Archive
+        </label>
+    </div>
+    </div>
+
+    <div class="field">
+    <label class="label" for="slate-url">Slate URL</label>
+    <div class="control">
+        <input id="slate-url" name="slate-url" type="text" class="input">
+        <p class="help">URL of a video file to be used as an alternative to the livestream</p>
+    </div>
+    </div>
+
+    <div class="field">
+    <div class="control">
+        <a class="button" href="/playout/">Cancel</a>
+        <input type="submit" class="button is-primary" value="Create">
+    </div>
+    </div>
+
+    </fieldset>
+</form>
+
+</div>
+{{end}}

@@ -18,26 +18,34 @@ type (
 	// Channel represents a video feed
 	Channel struct {
 		// Core
-		ID          int
-		ShortName   string // URL name
-		ChannelType string // event / linear
-		IngestURL   string
-		IngestType  string   // RTP / RTMP / HLS
-		SlateURL    string   // Fallback video
-		Archive     bool     // Add to VOD after
+		ID          int      `db:"channel_id"`
+		ShortName   string   `db:"short_name"` // URL name
+		ChannelType string   `db:"type"`       // event / linear
+		IngestURL   string   `db:"ingest_url"`
+		IngestType  string   `db:"ingest_type"` // RTP / RTMP / HLS
+		SlateURL    string   `db:"slate_url"`   // Fallback video
 		Outputs     []Output // Configured outputs
 		Status      string   // The state of channel ready / running / starting / stopping / pending
 
+		// Options
+		Visibilty string `db:"visibility"`
+		Archive   bool   `db:"archive"` // Add to VOD after
+		DVR       bool   `db:"dvr"`     // Allow rewind on outputs
+
 		// Frontend
-		Name        string // Display name
-		Description string
-		Thumbnail   string
-		CreatedAt   time.Time
+		Name        string    `db:"name"` // Display name
+		Description string    `db:"description"`
+		Thumbnail   string    `db:"thumbnail"`
+		CreatedAt   time.Time `db:"created_at"`
+
+		// Modules
+		hasScheduler bool `db:"has_scheduler"`
+		sch          *scheduler.Scheduler
+		hasPiper     bool `db:"has_piper"`
+		piper        *piper.Piper
 
 		// Dependencies
-		sch   *scheduler.Scheduler
-		piper *piper.Piper
-		conf  *Config
+		conf *Config
 	}
 
 	// NewChannelStruct represnets the required channel config
@@ -46,7 +54,6 @@ type (
 		Name         string
 		Description  string
 		ChannelType  string // event / linear
-		IngestURL    string
 		IngestType   string // RTSP / RTMP / HLS
 		SlateURL     string // fallback video
 		Visible      string // public / internal / private. TOOD: Will it stay?
