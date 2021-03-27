@@ -5,8 +5,6 @@ import (
 	"html/template"
 	"io"
 	"time"
-
-	"github.com/ystv/playout/public"
 )
 
 //go:embed *.tmpl
@@ -18,7 +16,17 @@ type (
 		funcs     template.FuncMap
 	}
 	Channel struct {
-		public.Channel
+		ShortName   string // URL name
+		ChannelType string // Event / linear
+		IngestURL   string
+		IngestType  string
+		SlateURL    string
+		Archive     bool
+		Status      string
+		Name        string // Display name
+		Description string
+		Thumbnail   string
+		CreatedAt   time.Time
 	}
 	BaseParams struct {
 		UserName   string

@@ -5,5 +5,8 @@ MCR: dashboard
 {{define "content"}}
 <div class="dashboard">
     <h1>Dashboard!</h1>
+    {{range .Channels}}
+        <p>{{.}}</p>
+    {{end}}
 </div>
 {{end}}

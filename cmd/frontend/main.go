@@ -7,13 +7,15 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/ystv/playout/channel"
 	"github.com/ystv/playout/web"
 )
 
 func main() {
+	mcr := channel.NewMCR()
 	r := mux.NewRouter()
 	r.HandleFunc("/", handleIndex).Methods("GET")
-	mount(r, "/playout", web.New())
+	mount(r, "/playout", web.New(mcr).Router())
 
 	log.Fatal(http.ListenAndServe("0.0.0.0:7070", r))
 }

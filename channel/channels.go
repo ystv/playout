@@ -61,6 +61,10 @@ func (mcr *MCR) GetChannel(ctx context.Context, shortName string) (*Channel, err
 	return ch, nil
 }
 
+func (mcr *MCR) GetChannels() (map[string]*Channel, error) {
+	return mcr.channels, nil
+}
+
 // NewChannel creates a new channel to playout
 func (mcr *MCR) NewChannel(ctx context.Context, newCh NewChannelStruct) (*Channel, error) {
 	ch := &Channel{
