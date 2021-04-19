@@ -8,6 +8,7 @@ import (
 )
 
 //go:embed *.tmpl
+//go:embed channel/*.tmpl
 var tpls embed.FS
 
 type (
@@ -64,8 +65,8 @@ func parse(file string) *template.Template {
 func New() *Templater {
 	return &Templater{
 		dashboard:  parse("dashboard.tmpl"),
-		channel:    parse("channel.tmpl"),
-		newChannel: parse("new-channel.tmpl"),
+		channel:    parse("channel/channel.tmpl"),
+		newChannel: parse("channel/new-channel.tmpl"),
 		settings:   parse("settings-main.tmpl"),
 	}
 }
