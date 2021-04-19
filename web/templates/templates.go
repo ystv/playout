@@ -15,6 +15,7 @@ type (
 		dashboard  *template.Template
 		channel    *template.Template
 		newChannel *template.Template
+		settings   *template.Template
 		funcs      template.FuncMap
 	}
 	Channel struct {
@@ -65,6 +66,7 @@ func New() *Templater {
 		dashboard:  parse("dashboard.tmpl"),
 		channel:    parse("channel.tmpl"),
 		newChannel: parse("new-channel.tmpl"),
+		settings:   parse("settings-main.tmpl"),
 	}
 }
 
@@ -78,4 +80,8 @@ func (t *Templater) Channel(w io.Writer, p ChannelParams) error {
 
 func (t *Templater) NewChannel(w io.Writer, p PlainParams) error {
 	return t.newChannel.Execute(w, p)
+}
+
+func (t *Templater) Settings(w io.Writer, p PlainParams) error {
+	return t.settings.Execute(w, p)
 }

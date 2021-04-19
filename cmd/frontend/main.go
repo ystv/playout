@@ -14,6 +14,9 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 	"github.com/ystv/playout/channel"
+	"github.com/ystv/playout/playout"
+	"github.com/ystv/playout/programming"
+	"github.com/ystv/playout/public"
 	"github.com/ystv/playout/web"
 )
 
@@ -26,15 +29,18 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to create mcr: %+v", err)
 	}
+	prog := programming.New(db)
+	po := playout.New(prog, db)
 	r := mux.NewRouter()
 	r.HandleFunc("/", handleIndex).Methods("GET")
 	mount(r, "/playout", web.New(mcr).Router())
+	mount(r, "/public", public.New(mcr, prog, po).Router())
 
 	log.Fatal(http.ListenAndServe("0.0.0.0:7070", r))
 }
 
 func handleIndex(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("playout (v0.0.2) frontend only (/playout)"))
+	w.Write([]byte("playout (v0.0.3) frontend only (/playout)"))
 	w.WriteHeader(http.StatusOK)
 }
 

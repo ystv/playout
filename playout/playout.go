@@ -25,7 +25,6 @@ type (
 	}
 	// Playouter handles the videostreams
 	Playouter struct {
-		// prog programming.ProgrammeStore
 		prog *programming.Programmer
 		db   *sqlx.DB
 	}
@@ -59,6 +58,10 @@ type (
 		Archive        bool      `db:"archive" json:"archive"`
 	}
 )
+
+func New(prog *programming.Programmer, db *sqlx.DB) *Playouter {
+	return &Playouter{prog: prog, db: db}
+}
 
 var _ Repo = &Playouter{}
 

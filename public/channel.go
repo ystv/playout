@@ -11,12 +11,13 @@ type (
 	//
 	// Linear or event video stream
 	Channel struct {
-		ShortName    string    `json:"shortName"`
-		Name         string    `json:"name"`
-		Description  string    `json:"description"`
-		Thumbnail    string    `json:"thumbnail"`
-		Destinations []string  `json:"destinations"`
-		Schedule     []Playout `json:"schedule"`
+		ShortName   string    `json:"shortName"`
+		Name        string    `json:"name"`
+		Description string    `json:"description"`
+		Thumbnail   string    `json:"thumbnail"`
+		Type        string    `json:"type"`
+		Outputs     []string  `json:"outputs"`
+		Schedule    []Playout `json:"schedule"`
 	}
 	// Playout public representation
 	//
@@ -47,7 +48,27 @@ type (
 
 // GetAll retrieves all channels
 func (p *Publicer) GetAll(ctx context.Context) ([]Channel, error) {
-	return nil, nil
+	chs, err := p.mcr.GetChannels()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get channels: %w", err)
+	}
+	tempChans := []Channel{}
+	for _, ch := range chs {
+		outputs := []string{}
+		for _, output := range ch.Outputs {
+			outputs = append(outputs, output.Destination)
+		}
+		tempChans = append(tempChans, Channel{
+			ShortName:   ch.ShortName,
+			Name:        ch.Name,
+			Description: ch.Description,
+			Thumbnail:   ch.Thumbnail,
+			Type:        ch.ChannelType,
+			Outputs:     outputs,
+		})
+	}
+
+	return tempChans, nil
 }
 
 // GetChannel returns the public representation of a channel
@@ -57,17 +78,18 @@ func (p *Publicer) GetChannel(ctx context.Context, shortName string) (*Channel, 
 		return nil, fmt.Errorf("failed to get public channel: %w", err)
 	}
 
-	dests := []string{}
+	outputs := []string{}
 	for _, output := range ch.Outputs {
-		dests = append(dests, output.Destination)
+		outputs = append(outputs, output.Destination)
 	}
 
 	chPublic := &Channel{
-		ShortName:    ch.ShortName,
-		Name:         ch.Name,
-		Description:  ch.Description,
-		Thumbnail:    ch.Thumbnail,
-		Destinations: dests,
+		ShortName:   ch.ShortName,
+		Name:        ch.Name,
+		Description: ch.Description,
+		Thumbnail:   ch.Thumbnail,
+		Type:        ch.ChannelType,
+		Outputs:     outputs,
 	}
 
 	return chPublic, nil

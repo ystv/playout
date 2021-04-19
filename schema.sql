@@ -279,3 +279,19 @@ COMMENT ON COLUMN playout.schedule_playouts.scheduled_start IS
 --     ident_id int REFERENCES playout.idents(ident_id) ON UPDATE CASCADE ON DELETE CASCADE,
 --     CONSTRAINT ident_group_items_pkey PRIMARY KEY (group_id, ident_id)
 -- );
+CREATE TABLE playout.outputs(
+    output_id int GENRATED BY DEFAULT AS IDENTITY ON UPDATE CASCADE ON DELETE CASCADE,
+    channel_id int NOT NULL REFERENCES playout.channel(channel_id) ON UPDATE CASCADE ON DELETE CASCADE,
+    name text NOT NULL,
+    type text NOT NULL,
+    passthrough bool NOT NULL,
+    dvr bool NOT NULL,
+    destination text NOT NULL,
+
+    args text NOT NULL,
+
+    CONSTRAINT outputs_pkey PRIMARY KEY (output_id, channel_id)
+);
+
+COMMNENT ON TABLE playout.outputs IS
+'Outputs are the result of a channel. Channel''s can have multiple outputs of different types.';

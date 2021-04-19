@@ -87,6 +87,7 @@ func (mcr *MCR) GetChannel(ctx context.Context, shortName string) (*Channel, err
 	return ch, nil
 }
 
+// GetChannels retrieves all channels
 func (mcr *MCR) GetChannels() (map[string]*Channel, error) {
 	return mcr.channels, nil
 }

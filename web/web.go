@@ -23,6 +23,7 @@ func New(mcr *channel.MCR) *Web {
 	web.mux.HandleFunc("/ch/{channel}", web.channelPage).Methods("GET")
 	web.mux.HandleFunc("/channel/new", web.newChannelPage).Methods("GET")
 	web.mux.HandleFunc("/channel/new", web.newChannel).Methods("POST")
+	web.mux.HandleFunc("/settings", web.settingsPage).Methods("GET")
 
 	return web
 }
@@ -33,9 +34,9 @@ func (web *Web) Router() *mux.Router {
 
 func (web *Web) indexPage(w http.ResponseWriter, r *http.Request) {
 	chs, err := web.mcr.GetChannels()
-	tempChan := []templates.Channel{}
+	tempChans := []templates.Channel{}
 	for _, ch := range chs {
-		tempChan = append(tempChan, templates.Channel{
+		tempChans = append(tempChans, templates.Channel{
 			ShortName:   ch.ShortName,
 			ChannelType: ch.ChannelType,
 			IngestURL:   ch.IngestURL,
@@ -59,7 +60,7 @@ func (web *Web) indexPage(w http.ResponseWriter, r *http.Request) {
 			UserName:   "rhys",
 			SystemTime: time.Now(),
 		},
-		Channels: tempChan,
+		Channels: tempChans,
 	}
 
 	err = web.t.Dashboard(w, params)
@@ -147,4 +148,18 @@ func (web *Web) newChannel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.Redirect(w, r, "/playout/ch/"+ch.ShortName, http.StatusFound)
+}
+
+func (web *Web) settingsPage(w http.ResponseWriter, r *http.Request) {
+	params := templates.PlainParams{
+		Base: templates.BaseParams{
+			UserName:   "rhys",
+			SystemTime: time.Now(),
+		},
+	}
+	err := web.t.Settings(w, params)
+	if err != nil {
+		err = fmt.Errorf("failed to render settings page: %w", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }

@@ -66,20 +66,26 @@ type (
 
 	// Outputs
 
-	// Output is an video output
+	// Output is an channel output.
+	//
+	// A channel can have multiple outputs
 	Output struct {
-		Name        string
-		Type        string // RTP / RTMP / HLS / DASH / CMAF
-		Passthrough bool
-		DVR         bool   // can rewind
-		Destination string // URL endpoint
+		Name        string `db:"name"`        // Optional decorative name to help identify streams
+		Type        string `db:"type"`        // RTP / RTMP / HLS / DASH / CMAF
+		Passthrough bool   `db:"passthrough"` // To transcode or not
+		DVR         bool   `db:"dvr"`         // Can rewind
+		Destination string `db:"destination"` // URL endpoint
 		Renditions  []Rendition
+
+		Status string // Health of stream
+
+		Args string `db:"args"` // ffmpeg arguments
 	}
-	// Output types
 
-	// Renditions
-
-	// Rendition represents a generic rendition of the source video
+	// Rendition represents a generic video stream information.
+	//
+	// This is generated, not stored, provides a read-only view
+	// to affect the video stream you will need to change the output.
 	Rendition struct {
 		Width   int
 		Height  int
@@ -88,7 +94,11 @@ type (
 		Codec   string // h264 / h265
 	}
 
-	// We might have some custom renditions for the fancier outputs
+	// This implementation is just as a fancy frontend/abstraction from
+	// the commands and should be available on all output types.
+	//
+	// In the future there might have some custom renditions as purely
+	// a frontend for creating new output objects for the fancier outputs.
 )
 
 // Start the channel
